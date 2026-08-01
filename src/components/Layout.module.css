@@ -1,0 +1,19 @@
+.page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--app-height, 100vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 8px max(16px, var(--safe-right)) calc(var(--tab-bar-height) + 6px + 24px)
+    max(16px, var(--safe-left));
+}
