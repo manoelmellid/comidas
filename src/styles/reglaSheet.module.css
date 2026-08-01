@@ -1,0 +1,81 @@
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 4px 4px 8px;
+}
+
+.optionGroup {
+  background: var(--color-bg);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;
+  border-bottom: 0.5px solid var(--color-border);
+  text-align: left;
+}
+
+.optionGroup .optionRow:last-child {
+  border-bottom: none;
+}
+
+.optionRowSelected {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.segmented {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.segmentButton {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 15px;
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.segmentButtonActive {
+  background: var(--color-accent);
+  color: white;
+}
+
+.numberInput {
+  width: 100%;
+  font-size: 17px;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: none;
+  margin-bottom: 16px;
+}
+
+.saveButton {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  background: var(--color-accent);
+  border-radius: var(--radius-card);
+  margin-bottom: 10px;
+  margin-top: 4px;
+}

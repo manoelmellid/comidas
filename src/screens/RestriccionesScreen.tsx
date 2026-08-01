@@ -1,10 +1,19 @@
-import { Placeholder } from '../components/Placeholder';
+import { useNavigate } from 'react-router-dom';
+import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
 
 export function RestriccionesScreen() {
+  const navigate = useNavigate();
+
   return (
-    <Placeholder
-      title="Aún no hay nada aquí"
-      subtitle="El generador de menú semanal y sus reglas (diarias y globales) llegan en la Fase 2."
-    />
+    <div className={sharedStyles.group}>
+      <button type="button" className={sharedStyles.row} onClick={() => navigate('/restricciones/diarias')}>
+        <span>Diarias</span>
+        <span className={sharedStyles.rowSecondary}>›</span>
+      </button>
+      <button type="button" className={sharedStyles.row} onClick={() => navigate('/restricciones/globales')}>
+        <span>Globales</span>
+        <span className={sharedStyles.rowSecondary}>›</span>
+      </button>
+    </div>
   );
 }

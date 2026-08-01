@@ -14,11 +14,14 @@ export interface PlatoIngrediente {
   cantidad: string;
 }
 
+export type TipoPlato = 'comida' | 'cena' | 'ambas';
+
 export interface Plato {
   id: string;
   nombre: string;
   ingredientes: PlatoIngrediente[];
   notas: string;
+  tipo: TipoPlato;
 }
 
 /** One row per (fecha, tipo) slot. `id` is the deterministic key `${fecha}__${tipo}`. */
@@ -112,6 +115,11 @@ export async function getAllIngredientes(): Promise<Ingrediente[]> {
 export async function saveIngrediente(ingrediente: Ingrediente): Promise<void> {
   const db = await getDB();
   await db.put('ingredientes', ingrediente);
+}
+
+export async function deleteIngrediente(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('ingredientes', id);
 }
 
 // ---------------------------------------------------------------------------

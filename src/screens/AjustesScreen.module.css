@@ -1,0 +1,112 @@
+.group {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 17px;
+  border-bottom: 0.5px solid var(--color-border);
+  text-align: left;
+}
+
+.group .row:last-child {
+  border-bottom: none;
+}
+
+.rowSecondary {
+  color: var(--color-text-secondary);
+}
+
+.rowDanger {
+  color: var(--color-danger);
+}
+
+.rowAccent {
+  color: var(--color-accent);
+}
+
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 20px 4px 8px;
+}
+
+.sectionLabel:first-child {
+  margin-top: 4px;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: -8px 4px 20px;
+  line-height: 1.4;
+}
+
+.stepperRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.stepperControls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stepperButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.stepperValue {
+  font-size: 17px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.sheetInput {
+  width: 100%;
+  font-size: 17px;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: none;
+  margin-bottom: 14px;
+}
+
+.sheetInput::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.saveButton {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  background: var(--color-accent);
+  border-radius: var(--radius-card);
+  margin-bottom: 10px;
+}

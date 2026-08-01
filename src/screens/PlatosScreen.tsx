@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { PlatoDetail } from '../features/comidas/PlatoDetail';
 import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
+import { IconIngredientes } from '../components/icons';
 import type { LayoutContext } from '../lib/layoutContext';
 import {
   deletePlato,
@@ -17,13 +18,14 @@ import {
 } from '../lib/db';
 
 export function PlatosScreen() {
+  const navigate = useNavigate();
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [comidas, setComidas] = useState<Comida[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const { setTopLeftBack, setTitle } = useOutletContext<LayoutContext>();
+  const { setTopLeftBack, setTitle, setTopRightAction } = useOutletContext<LayoutContext>();
 
   useEffect(() => {
     Promise.all([getAllPlatos(), getAllIngredientes(), getAllComidas()]).then(([p, i, c]) => {
@@ -40,15 +42,22 @@ export function PlatosScreen() {
     if (selectedPlato) {
       setTitle(selectedPlato.nombre);
       setTopLeftBack({ label: 'Platos', onClick: () => setSelectedId(null) });
+      setTopRightAction(null);
     } else {
       setTitle(null);
       setTopLeftBack(null);
+      setTopRightAction({
+        icon: <IconIngredientes />,
+        label: 'Ingredientes',
+        onClick: () => navigate('/ingredientes'),
+      });
     }
     return () => {
       setTitle(null);
       setTopLeftBack(null);
+      setTopRightAction(null);
     };
-  }, [selectedPlato, setTitle, setTopLeftBack]);
+  }, [selectedPlato, setTitle, setTopLeftBack, setTopRightAction, navigate]);
 
   const filtered = useMemo(() => {
     const sorted = [...platos].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
@@ -62,7 +71,7 @@ export function PlatosScreen() {
   async function handleCreate() {
     const nombre = query.trim();
     if (!nombre) return;
-    const plato: Plato = { id: newId(), nombre, ingredientes: [], notas: '' };
+    const plato: Plato = { id: newId(), nombre, ingredientes: [], notas: '', tipo: 'ambas' };
     await savePlato(plato);
     setPlatos((prev) => [...prev, plato]);
     setQuery('');

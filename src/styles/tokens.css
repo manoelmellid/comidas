@@ -6,6 +6,7 @@
   --color-border: rgba(60, 60, 67, 0.13);
   --color-accent: #007aff;
   --color-danger: #ff3b30;
+  --color-warning: #ff9500;
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 
@@ -26,6 +27,7 @@
     --color-text: #ffffff;
     --color-text-secondary: #8e8e93;
     --color-border: rgba(84, 84, 88, 0.4);
+    --color-warning: #ff9f0a;
     --shadow-card: none;
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import styles from './ComidasScreen.module.css';
 import { WeekNav } from '../features/comidas/WeekNav';
 import { DayCard } from '../features/comidas/DayCard';
 import { AsignarComidaSheet } from '../features/comidas/AsignarComidaSheet';
@@ -52,7 +53,7 @@ export function ComidasScreen() {
   }
 
   async function handleCreatePlato(nombre: string): Promise<string> {
-    const plato: Plato = { id: newId(), nombre, ingredientes: [], notas: '' };
+    const plato: Plato = { id: newId(), nombre, ingredientes: [], notas: '', tipo: 'ambas' };
     await savePlato(plato);
     setPlatos((prev) => [...prev, plato]);
     return plato.id;
@@ -95,11 +96,19 @@ export function ComidasScreen() {
     setSelection(null);
   }
 
+  function handleGenerar() {
+    alert('Aquí se generarán los próximos 7 días de comidas y cenas. (Ejemplo — la Fase 2.2 conecta esto a datos reales.)');
+  }
+
   if (loading) return null;
 
   return (
     <div>
       <WeekNav days={days} weekOffset={weekOffset} onChangeOffset={setWeekOffset} />
+
+      <button type="button" className={styles.generarButton} onClick={handleGenerar}>
+        Generar próximos 7 días
+      </button>
 
       {days.map((date) => {
         const fecha = toISODate(date);

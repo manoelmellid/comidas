@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react';
 import sharedStyles from './AsignarComidaSheet.module.css';
 import styles from './PlatoDetail.module.css';
-import type { Ingrediente, Plato, PlatoIngrediente } from '../../lib/db';
+import type { Ingrediente, Plato, PlatoIngrediente, TipoPlato } from '../../lib/db';
+
+const TIPO_OPCIONES: { tipo: TipoPlato; label: string }[] = [
+  { tipo: 'comida', label: 'Comida' },
+  { tipo: 'cena', label: 'Cena' },
+  { tipo: 'ambas', label: 'Ambas' },
+];
 
 interface PlatoDetailProps {
   plato: Plato;
@@ -23,6 +29,7 @@ export function PlatoDetail({
   onRenameIngrediente,
 }: PlatoDetailProps) {
   const [nombre, setNombre] = useState(plato.nombre);
+  const [tipo, setTipo] = useState<TipoPlato>(plato.tipo ?? 'ambas');
   const [notas, setNotas] = useState(plato.notas);
   const [items, setItems] = useState<PlatoIngrediente[]>(plato.ingredientes);
   const [addQuery, setAddQuery] = useState('');
@@ -91,6 +98,19 @@ export function PlatoDetail({
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
       />
+
+      <div className={styles.segmented}>
+        {TIPO_OPCIONES.map(({ tipo: t, label }) => (
+          <button
+            key={t}
+            type="button"
+            className={`${styles.segmentButton} ${tipo === t ? styles.segmentButtonActive : ''}`}
+            onClick={() => setTipo(t)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <p className={styles.sectionLabel}>Ingredientes</p>
 
@@ -185,7 +205,9 @@ export function PlatoDetail({
       <button
         type="button"
         className={sharedStyles.saveButton}
-        onClick={() => onSave({ ...plato, nombre: nombre.trim() || plato.nombre, ingredientes: items, notas })}
+        onClick={() =>
+          onSave({ ...plato, nombre: nombre.trim() || plato.nombre, ingredientes: items, notas, tipo })
+        }
       >
         Guardar cambios
       </button>

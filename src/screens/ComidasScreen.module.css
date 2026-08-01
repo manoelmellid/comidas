@@ -1,0 +1,12 @@
+.generarButton {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  background: var(--color-accent);
+  border-radius: var(--radius-card);
+  margin-bottom: 16px;
+}
