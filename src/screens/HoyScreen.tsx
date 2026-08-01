@@ -1,10 +1,21 @@
+import { useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Placeholder } from '../components/Placeholder';
+import { IconArrowUpDown } from '../components/icons';
+import type { LayoutContext } from '../lib/layoutContext';
 
 export function HoyScreen() {
+  const { setTopRightAction, openSettings } = useOutletContext<LayoutContext>();
+
+  useEffect(() => {
+    setTopRightAction({ icon: <IconArrowUpDown />, label: 'Ajustes', onClick: openSettings });
+    return () => setTopRightAction(null);
+  }, [setTopRightAction, openSettings]);
+
   return (
     <Placeholder
       title="Aún no hay nada que ver"
-      subtitle="Esto mostrará la comida y la cena de hoy en cuanto exista el planificador semanal."
+      subtitle="Este dashboard se construye al final, cuando el Generador ya tenga un plan real que resumir."
     />
   );
 }

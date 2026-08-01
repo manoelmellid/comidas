@@ -1,10 +1,12 @@
 import { NavLink } from 'react-router-dom';
 import styles from './TabBar.module.css';
-import { IconComidas, IconHoy } from './icons';
+import { IconComidas, IconHoy, IconPlatos, IconRestricciones } from './icons';
 
 const TABS = [
   { to: '/', label: 'Hoy', Icon: IconHoy, end: true },
   { to: '/comidas', label: 'Comidas', Icon: IconComidas },
+  { to: '/platos', label: 'Platos', Icon: IconPlatos },
+  { to: '/restricciones', label: 'Restricciones', Icon: IconRestricciones },
 ];
 
 export function TabBar() {

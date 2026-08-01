@@ -3,24 +3,29 @@ import { Outlet, useLocation } from 'react-router-dom';
 import styles from './Layout.module.css';
 import { TopBar, type TopBarAction, type TopBarBack } from './TopBar';
 import { TabBar } from './TabBar';
+import { SettingsSheet } from './SettingsSheet';
 import type { LayoutContext } from '../lib/layoutContext';
 
 const TITLES: Record<string, string> = {
   '/': 'Hoy',
   '/comidas': 'Comidas',
+  '/platos': 'Platos',
+  '/restricciones': 'Restricciones',
 };
 
 export function Layout() {
   const location = useLocation();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [topRightAction, setTopRightAction] = useState<TopBarAction | null>(null);
   const [topLeftBack, setTopLeftBack] = useState<TopBarBack | null>(null);
   const [customTitle, setCustomTitle] = useState<string | null>(null);
   const title = customTitle ?? TITLES[location.pathname] ?? 'Comidas';
 
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
   const setTitle = useCallback((t: string | null) => setCustomTitle(t), []);
   const context = useMemo<LayoutContext>(
-    () => ({ setTopRightAction, setTopLeftBack, setTitle }),
-    [setTopRightAction, setTopLeftBack, setTitle],
+    () => ({ setTopRightAction, setTopLeftBack, setTitle, openSettings }),
+    [setTopRightAction, setTopLeftBack, setTitle, openSettings],
   );
 
   return (
@@ -30,6 +35,7 @@ export function Layout() {
         <Outlet context={context} />
       </main>
       <TabBar />
+      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }
