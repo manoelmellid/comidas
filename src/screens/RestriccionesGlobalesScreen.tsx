@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
 import sheetStyles from '../styles/reglaSheet.module.css';
+import stepperStyles from './AjustesScreen.module.css';
 import { Sheet } from '../components/Sheet';
 import { resolveValorNombre } from '../lib/reglaDisplay';
 import {
@@ -193,14 +194,30 @@ export function RestriccionesGlobalesScreen() {
             ))}
           </div>
 
-          <p className={sheetStyles.sectionLabel}>Número de días</p>
-          <input
-            type="number"
-            min={0}
-            className={sheetStyles.numberInput}
-            value={draft.dias}
-            onChange={(e) => setDraft((d) => ({ ...d, dias: Math.max(0, Number(e.target.value)) }))}
-          />
+          <div className={stepperStyles.group}>
+            <div className={stepperStyles.stepperRow}>
+              <span>Número de días</span>
+              <div className={stepperStyles.stepperControls}>
+                <button
+                  type="button"
+                  className={stepperStyles.stepperButton}
+                  onClick={() => setDraft((d) => ({ ...d, dias: Math.max(0, d.dias - 1) }))}
+                  aria-label="Menos"
+                >
+                  −
+                </button>
+                <span className={stepperStyles.stepperValue}>{draft.dias}</span>
+                <button
+                  type="button"
+                  className={stepperStyles.stepperButton}
+                  onClick={() => setDraft((d) => ({ ...d, dias: d.dias + 1 }))}
+                  aria-label="Más"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
 
           <p className={sheetStyles.sectionLabel}>Aplica a</p>
           <div className={sheetStyles.segmented}>

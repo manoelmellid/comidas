@@ -55,17 +55,6 @@
   color: white;
 }
 
-.numberInput {
-  width: 100%;
-  font-size: 17px;
-  padding: 10px 14px;
-  border-radius: var(--radius-control);
-  background: var(--color-bg);
-  color: var(--color-text);
-  border: none;
-  margin-bottom: 16px;
-}
-
 .saveButton {
   display: block;
   width: 100%;

@@ -21,27 +21,31 @@ export function Layout() {
   const [topRightActions, setTopRightActions] = useState<TopBarAction[]>([]);
   const [topLeftBack, setTopLeftBack] = useState<TopBarBack | null>(null);
   const [customTitle, setCustomTitle] = useState<string | null>(null);
-  const [inputFocused, setInputFocused] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const title = customTitle ?? TITLES[location.pathname] ?? 'Comidas';
 
   useEffect(() => {
-    const isTextInput = (el: Element | null) =>
-      el instanceof HTMLElement && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+    const vv = window.visualViewport;
+    if (!vv) return;
 
-    function handleFocusIn(e: FocusEvent) {
-      if (isTextInput(e.target as Element | null)) setInputFocused(true);
-    }
-    function handleFocusOut() {
-      // El nuevo elemento enfocado aún no está activo al disparar focusout; esperar un tick.
-      setTimeout(() => setInputFocused(isTextInput(document.activeElement)), 0);
+    function handleViewportResize() {
+      // El teclado en iOS reduce visualViewport.height sin tocar innerHeight — a diferencia
+      // de un simple focus/blur, esto no se dispara con el autoFocus programático de un
+      // input si iOS decide no abrir el teclado (pasa al entrar en Platos/Ingredientes).
+      const keyboardLikely = vv!.height < window.innerHeight - 150;
+      setKeyboardOpen(keyboardLikely);
+      if (keyboardLikely) {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+          // Fuerza un recálculo de scroll una vez el contenedor ya midió el alto reducido
+          // (el scroll-al-foco nativo de iOS a veces se dispara con la medida vieja).
+          setTimeout(() => active.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
+        }
+      }
     }
 
-    document.addEventListener('focusin', handleFocusIn);
-    document.addEventListener('focusout', handleFocusOut);
-    return () => {
-      document.removeEventListener('focusin', handleFocusIn);
-      document.removeEventListener('focusout', handleFocusOut);
-    };
+    vv.addEventListener('resize', handleViewportResize);
+    return () => vv.removeEventListener('resize', handleViewportResize);
   }, []);
 
   const setTitle = useCallback((t: string | null) => setCustomTitle(t), []);
@@ -56,7 +60,7 @@ export function Layout() {
       <main className={`${styles.content} app-content-scroll`}>
         <Outlet context={context} />
       </main>
-      {!inputFocused && <TabBar />}
+      {!keyboardOpen && <TabBar />}
     </div>
   );
 }
