@@ -3,12 +3,11 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import styles from './AjustesScreen.module.css';
 import { Sheet } from '../components/Sheet';
 import { exportBackup, importBackup } from '../lib/backup';
-import { clearAllData } from '../lib/db';
-import { CATEGORIAS_SEED } from '../lib/categoriasSeed';
+import { clearAllData, getAllCategorias, getPreferencias, newId, saveCategoria, setPreferencias, type Categoria } from '../lib/db';
 import type { LayoutContext } from '../lib/layoutContext';
 
 interface EditingCategoria {
-  index: number | null; // null = crear nueva
+  id: string | null; // null = crear nueva
   nombre: string;
 }
 
@@ -18,7 +17,7 @@ export function AjustesScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
-  const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_SEED);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [editing, setEditing] = useState<EditingCategoria | null>(null);
   const [semanasAtras, setSemanasAtras] = useState(1);
 
@@ -26,6 +25,13 @@ export function AjustesScreen() {
     setTopLeftBack({ label: 'Hoy', onClick: () => navigate('/') });
     return () => setTopLeftBack(null);
   }, [setTopLeftBack, navigate]);
+
+  useEffect(() => {
+    Promise.all([getAllCategorias(), getPreferencias()]).then(([c, prefs]) => {
+      setCategorias(c);
+      setSemanasAtras(prefs.semanasAtras);
+    });
+  }, []);
 
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -49,14 +55,21 @@ export function AjustesScreen() {
     setStatus('Todos los datos han sido borrados.');
   }
 
-  function commitCategoria() {
+  async function commitCategoria() {
     const nombre = editing?.nombre.trim();
     if (editing && nombre) {
+      const categoria: Categoria = { id: editing.id ?? newId(), nombre };
+      await saveCategoria(categoria);
       setCategorias((prev) =>
-        editing.index === null ? [...prev, nombre] : prev.map((c, i) => (i === editing.index ? nombre : c)),
+        editing.id === null ? [...prev, categoria] : prev.map((c) => (c.id === editing.id ? categoria : c)),
       );
     }
     setEditing(null);
+  }
+
+  async function updateSemanasAtras(nuevo: number) {
+    setSemanasAtras(nuevo);
+    await setPreferencias(nuevo);
   }
 
   return (
@@ -86,21 +99,21 @@ export function AjustesScreen() {
 
       <p className={styles.sectionLabel}>Categorías de ingrediente</p>
       <div className={styles.group}>
-        {categorias.map((nombre, index) => (
+        {categorias.map((categoria) => (
           <button
             type="button"
-            key={`${nombre}-${index}`}
+            key={categoria.id}
             className={styles.row}
-            onClick={() => setEditing({ index, nombre })}
+            onClick={() => setEditing({ id: categoria.id, nombre: categoria.nombre })}
           >
-            <span>{nombre}</span>
+            <span>{categoria.nombre}</span>
             <span className={styles.rowSecondary}>›</span>
           </button>
         ))}
         <button
           type="button"
           className={`${styles.row} ${styles.rowAccent}`}
-          onClick={() => setEditing({ index: null, nombre: '' })}
+          onClick={() => setEditing({ id: null, nombre: '' })}
         >
           + Nueva categoría
         </button>
@@ -114,7 +127,7 @@ export function AjustesScreen() {
             <button
               type="button"
               className={styles.stepperButton}
-              onClick={() => setSemanasAtras((n) => Math.max(0, n - 1))}
+              onClick={() => updateSemanasAtras(Math.max(0, semanasAtras - 1))}
               aria-label="Menos"
             >
               −
@@ -123,7 +136,7 @@ export function AjustesScreen() {
             <button
               type="button"
               className={styles.stepperButton}
-              onClick={() => setSemanasAtras((n) => n + 1)}
+              onClick={() => updateSemanasAtras(semanasAtras + 1)}
               aria-label="Más"
             >
               +
@@ -134,7 +147,7 @@ export function AjustesScreen() {
       <p className={styles.hint}>En 0, la anti-repetición se desactiva del todo.</p>
 
       {editing && (
-        <Sheet title={editing.index === null ? 'Nueva categoría' : 'Renombrar categoría'} onClose={() => setEditing(null)}>
+        <Sheet title={editing.id === null ? 'Nueva categoría' : 'Renombrar categoría'} onClose={() => setEditing(null)}>
           <input
             className={styles.sheetInput}
             placeholder="Nombre de la categoría…"

@@ -3,24 +3,43 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import styles from './RestriccionesDiariasScreen.module.css';
 import sheetStyles from '../styles/reglaSheet.module.css';
 import { Sheet } from '../components/Sheet';
-import { CATEGORIAS_SEED } from '../lib/categoriasSeed';
-import { getAllIngredientes, getAllPlatos, type Ingrediente, type Plato } from '../lib/db';
+import { resolveValorNombre } from '../lib/reglaDisplay';
+import {
+  getAllCategorias,
+  getAllIngredientes,
+  getAllPlatos,
+  getAllReglasDiarias,
+  reglaDiariaId,
+  setReglaDiaria,
+  type Categoria,
+  type DiaSemana,
+  type Ingrediente,
+  type ModoRegla,
+  type Plato,
+  type ReglaDiaria,
+  type TipoComida,
+  type TipoReglaDiaria,
+} from '../lib/db';
 import type { LayoutContext } from '../lib/layoutContext';
 
-const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-const TIPOS: { tipo: 'comida' | 'cena'; label: string }[] = [
+const DIAS: { label: string; slug: DiaSemana }[] = [
+  { label: 'Lunes', slug: 'lunes' },
+  { label: 'Martes', slug: 'martes' },
+  { label: 'Miércoles', slug: 'miercoles' },
+  { label: 'Jueves', slug: 'jueves' },
+  { label: 'Viernes', slug: 'viernes' },
+  { label: 'Sábado', slug: 'sabado' },
+  { label: 'Domingo', slug: 'domingo' },
+];
+const TIPOS: { tipo: TipoComida; label: string }[] = [
   { tipo: 'comida', label: 'Comida' },
   { tipo: 'cena', label: 'Cena' },
 ];
 
-type TipoReglaDiaria = 'ninguna' | 'no_elaborar' | 'plato' | 'ingrediente' | 'categoria';
-type Modo = 'forzar' | 'prohibir';
-
-interface ReglaDiariaLocal {
+interface DraftRegla {
   tipo: TipoReglaDiaria;
   valorId?: string;
-  valorNombre?: string;
-  modo?: Modo;
+  modo?: ModoRegla;
 }
 
 const TIPO_OPCIONES: { tipo: TipoReglaDiaria; label: string }[] = [
@@ -31,25 +50,22 @@ const TIPO_OPCIONES: { tipo: TipoReglaDiaria; label: string }[] = [
   { tipo: 'categoria', label: 'Categoría' },
 ];
 
-function slotKey(dia: string, tipo: string): string {
-  return `${dia}-${tipo}`;
-}
-
-function describeRegla(regla: ReglaDiariaLocal | undefined): string {
-  if (!regla || regla.tipo === 'ninguna') return 'Ninguna';
-  if (regla.tipo === 'no_elaborar') return 'No elaborar';
-  const modoLabel = regla.modo === 'prohibir' ? 'prohibir' : 'forzar';
-  return `${regla.valorNombre ?? '—'} (${modoLabel})`;
+interface EditingSlot {
+  slug: DiaSemana;
+  tipo: TipoComida;
+  diaLabel: string;
+  tipoLabel: string;
 }
 
 export function RestriccionesDiariasScreen() {
   const navigate = useNavigate();
   const { setTopLeftBack } = useOutletContext<LayoutContext>();
-  const [reglas, setReglas] = useState<Record<string, ReglaDiariaLocal>>({});
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [draft, setDraft] = useState<ReglaDiariaLocal>({ tipo: 'ninguna' });
+  const [reglas, setReglas] = useState<Record<string, ReglaDiaria>>({});
+  const [editingSlot, setEditingSlot] = useState<EditingSlot | null>(null);
+  const [draft, setDraft] = useState<DraftRegla>({ tipo: 'ninguna' });
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
 
   useEffect(() => {
     setTopLeftBack({ label: 'Restricciones', onClick: () => navigate('/restricciones') });
@@ -57,21 +73,45 @@ export function RestriccionesDiariasScreen() {
   }, [setTopLeftBack, navigate]);
 
   useEffect(() => {
-    Promise.all([getAllPlatos(), getAllIngredientes()]).then(([p, i]) => {
-      setPlatos(p);
-      setIngredientes(i);
-    });
+    Promise.all([getAllPlatos(), getAllIngredientes(), getAllCategorias(), getAllReglasDiarias()]).then(
+      ([p, i, c, r]) => {
+        setPlatos(p);
+        setIngredientes(i);
+        setCategorias(c);
+        setReglas(Object.fromEntries(r.map((regla) => [regla.id, regla])));
+      },
+    );
   }, []);
 
-  function openEditor(key: string) {
-    setDraft(reglas[key] ?? { tipo: 'ninguna' });
-    setEditingKey(key);
+  function describeRegla(regla: ReglaDiaria | undefined): string {
+    if (!regla || regla.tipo === 'ninguna') return 'Ninguna';
+    if (regla.tipo === 'no_elaborar') return 'No elaborar';
+    const modoLabel = regla.modo === 'prohibir' ? 'prohibir' : 'forzar';
+    const nombre = resolveValorNombre(regla.tipo, regla.valorId, { platos, ingredientes, categorias });
+    return `${nombre} (${modoLabel})`;
   }
 
-  function commitDraft() {
-    if (!editingKey) return;
-    setReglas((prev) => ({ ...prev, [editingKey]: draft }));
-    setEditingKey(null);
+  function openEditor(diaLabel: string, slug: DiaSemana, tipo: TipoComida, tipoLabel: string) {
+    const existing = reglas[reglaDiariaId(slug, tipo)];
+    setDraft(
+      existing ? { tipo: existing.tipo, valorId: existing.valorId, modo: existing.modo ?? 'forzar' } : { tipo: 'ninguna' },
+    );
+    setEditingSlot({ slug, tipo, diaLabel, tipoLabel });
+  }
+
+  async function commitDraft() {
+    if (!editingSlot) return;
+    const regla: ReglaDiaria = {
+      id: reglaDiariaId(editingSlot.slug, editingSlot.tipo),
+      diaSemana: editingSlot.slug,
+      tipoComida: editingSlot.tipo,
+      tipo: draft.tipo,
+      valorId: draft.valorId,
+      modo: draft.modo,
+    };
+    await setReglaDiaria(regla);
+    setReglas((prev) => ({ ...prev, [regla.id]: regla }));
+    setEditingSlot(null);
   }
 
   const opcionesValor: { id: string; nombre: string }[] =
@@ -80,28 +120,30 @@ export function RestriccionesDiariasScreen() {
       : draft.tipo === 'ingrediente'
         ? ingredientes.map((i) => ({ id: i.id, nombre: i.nombre }))
         : draft.tipo === 'categoria'
-          ? CATEGORIAS_SEED.map((c) => ({ id: c, nombre: c }))
+          ? categorias.map((c) => ({ id: c.id, nombre: c.nombre }))
           : [];
 
   return (
     <div>
-      {DIAS.map((dia) => (
-        <div key={dia} className={styles.card}>
-          <p className={styles.dayLabel}>{dia}</p>
-          {TIPOS.map(({ tipo, label }) => {
-            const key = slotKey(dia, tipo);
-            return (
-              <button key={key} type="button" className={styles.row} onClick={() => openEditor(key)}>
-                <span className={styles.rowLabel}>{label}</span>
-                <span className={styles.rowValue}>{describeRegla(reglas[key])}</span>
-              </button>
-            );
-          })}
+      {DIAS.map(({ label: diaLabel, slug }) => (
+        <div key={slug} className={styles.card}>
+          <p className={styles.dayLabel}>{diaLabel}</p>
+          {TIPOS.map(({ tipo, label }) => (
+            <button
+              key={tipo}
+              type="button"
+              className={styles.row}
+              onClick={() => openEditor(diaLabel, slug, tipo, label)}
+            >
+              <span className={styles.rowLabel}>{label}</span>
+              <span className={styles.rowValue}>{describeRegla(reglas[reglaDiariaId(slug, tipo)])}</span>
+            </button>
+          ))}
         </div>
       ))}
 
-      {editingKey && (
-        <Sheet title={editingKey.replace('-', ' · ')} onClose={() => setEditingKey(null)}>
+      {editingSlot && (
+        <Sheet title={`${editingSlot.diaLabel} · ${editingSlot.tipoLabel}`} onClose={() => setEditingSlot(null)}>
           <p className={sheetStyles.sectionLabel}>Tipo de regla</p>
           <div className={sheetStyles.optionGroup}>
             {TIPO_OPCIONES.map(({ tipo, label }) => (
@@ -109,7 +151,7 @@ export function RestriccionesDiariasScreen() {
                 key={tipo}
                 type="button"
                 className={`${sheetStyles.optionRow} ${draft.tipo === tipo ? sheetStyles.optionRowSelected : ''}`}
-                onClick={() => setDraft({ tipo })}
+                onClick={() => setDraft({ tipo, modo: 'forzar' })}
               >
                 {label}
               </button>
@@ -130,7 +172,7 @@ export function RestriccionesDiariasScreen() {
                     key={opt.id}
                     type="button"
                     className={`${sheetStyles.optionRow} ${draft.valorId === opt.id ? sheetStyles.optionRowSelected : ''}`}
-                    onClick={() => setDraft((d) => ({ ...d, valorId: opt.id, valorNombre: opt.nombre }))}
+                    onClick={() => setDraft((d) => ({ ...d, valorId: opt.id }))}
                   >
                     {opt.nombre}
                   </button>

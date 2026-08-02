@@ -6,12 +6,14 @@ import { IconIngredientes } from '../components/icons';
 import type { LayoutContext } from '../lib/layoutContext';
 import {
   deletePlato,
+  getAllCategorias,
   getAllComidas,
   getAllIngredientes,
   getAllPlatos,
   newId,
   savePlato,
   saveIngrediente,
+  type Categoria,
   type Comida,
   type Ingrediente,
   type Plato,
@@ -21,6 +23,7 @@ export function PlatosScreen() {
   const navigate = useNavigate();
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [comidas, setComidas] = useState<Comida[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -28,10 +31,11 @@ export function PlatosScreen() {
   const { setTopLeftBack, setTitle, setTopRightAction } = useOutletContext<LayoutContext>();
 
   useEffect(() => {
-    Promise.all([getAllPlatos(), getAllIngredientes(), getAllComidas()]).then(([p, i, c]) => {
+    Promise.all([getAllPlatos(), getAllIngredientes(), getAllCategorias(), getAllComidas()]).then(([p, i, c, cm]) => {
       setPlatos(p);
       setIngredientes(i);
-      setComidas(c);
+      setCategorias(c);
+      setComidas(cm);
       setLoading(false);
     });
   }, []);
@@ -90,15 +94,17 @@ export function PlatosScreen() {
     setSelectedId(null);
   }
 
-  async function handleCreateIngrediente(nombre: string): Promise<string> {
-    const ingrediente: Ingrediente = { id: newId(), nombre };
+  async function handleCreateIngrediente(nombre: string, categoriaId: string): Promise<string> {
+    const ingrediente: Ingrediente = { id: newId(), nombre, categoriaId };
     await saveIngrediente(ingrediente);
     setIngredientes((prev) => [...prev, ingrediente]);
     return ingrediente.id;
   }
 
   async function handleRenameIngrediente(id: string, nombre: string) {
-    const ingrediente: Ingrediente = { id, nombre };
+    const existente = ingredientes.find((i) => i.id === id);
+    if (!existente) return;
+    const ingrediente: Ingrediente = { ...existente, nombre };
     await saveIngrediente(ingrediente);
     setIngredientes((prev) => prev.map((i) => (i.id === id ? ingrediente : i)));
   }
@@ -110,6 +116,7 @@ export function PlatosScreen() {
       <PlatoDetail
         plato={selectedPlato}
         ingredientes={ingredientes}
+        categorias={categorias}
         usageCount={comidas.filter((c) => c.platoId === selectedPlato.id).length}
         onSave={handleUpdatePlato}
         onDelete={() => handleDeletePlato(selectedPlato.id)}

@@ -16,7 +16,7 @@ interface AsignarComidaSheetProps {
   onClear: () => void;
 }
 
-type Mode = 'list' | 'tupper' | 'fuera';
+type Mode = 'list' | 'fuera';
 
 export function AsignarComidaSheet({
   fecha,
@@ -58,10 +58,9 @@ export function AsignarComidaSheet({
     setTagInput('');
   }
 
-  if (mode === 'tupper' || mode === 'fuera') {
-    const especialLabel = mode === 'tupper' ? 'Tupper' : 'Fuera';
+  if (mode === 'fuera') {
     return (
-      <Sheet title={`${especialLabel} - ${dateLabel}`} onClose={onClose}>
+      <Sheet title={`Fuera - ${dateLabel}`} onClose={onClose}>
         <button type="button" className={styles.backButton} onClick={() => setMode('list')}>
           ‹ Volver
         </button>
@@ -126,10 +125,6 @@ export function AsignarComidaSheet({
       )}
 
       <div className={styles.group}>
-        <button type="button" className={styles.row} onClick={() => setMode('tupper')}>
-          <span>Tupper</span>
-          <span className={styles.rowSecondary}>›</span>
-        </button>
         <button type="button" className={styles.row} onClick={() => setMode('fuera')}>
           <span>Fuera</span>
           <span className={styles.rowSecondary}>›</span>

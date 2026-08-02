@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import sharedStyles from './AsignarComidaSheet.module.css';
 import styles from './PlatoDetail.module.css';
-import type { Ingrediente, Plato, PlatoIngrediente, TipoPlato } from '../../lib/db';
+import { CategoriaPickerSheet } from '../../components/CategoriaPickerSheet';
+import type { Categoria, Ingrediente, Plato, PlatoIngrediente, TipoPlato } from '../../lib/db';
 
 const TIPO_OPCIONES: { tipo: TipoPlato; label: string }[] = [
   { tipo: 'comida', label: 'Comida' },
@@ -12,16 +13,18 @@ const TIPO_OPCIONES: { tipo: TipoPlato; label: string }[] = [
 interface PlatoDetailProps {
   plato: Plato;
   ingredientes: Ingrediente[];
+  categorias: Categoria[];
   usageCount: number;
   onSave: (updated: Plato) => Promise<void>;
   onDelete: () => Promise<void>;
-  onCreateIngrediente: (nombre: string) => Promise<string>;
+  onCreateIngrediente: (nombre: string, categoriaId: string) => Promise<string>;
   onRenameIngrediente: (id: string, nombre: string) => Promise<void>;
 }
 
 export function PlatoDetail({
   plato,
   ingredientes,
+  categorias,
   usageCount,
   onSave,
   onDelete,
@@ -36,6 +39,7 @@ export function PlatoDetail({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [pendingIngredienteNombre, setPendingIngredienteNombre] = useState<string | null>(null);
 
   const availableFiltered = useMemo(() => {
     const addedIds = new Set(items.map((i) => i.ingredienteId));
@@ -55,11 +59,17 @@ export function PlatoDetail({
     setAddQuery('');
   }
 
-  async function handleCreateIngrediente() {
+  function handleCreateIngrediente() {
     const nombreNuevo = addQuery.trim();
     if (!nombreNuevo) return;
-    const id = await onCreateIngrediente(nombreNuevo);
+    setPendingIngredienteNombre(nombreNuevo);
+  }
+
+  async function handleSelectCategoria(categoriaId: string) {
+    if (!pendingIngredienteNombre) return;
+    const id = await onCreateIngrediente(pendingIngredienteNombre, categoriaId);
     addExisting(id);
+    setPendingIngredienteNombre(null);
   }
 
   function updateCantidad(ingredienteId: string, cantidad: string) {
@@ -225,6 +235,15 @@ export function PlatoDetail({
             : 'Eliminar plato'}
         </button>
       </div>
+
+      {pendingIngredienteNombre !== null && (
+        <CategoriaPickerSheet
+          categorias={categorias}
+          title="Categoría del ingrediente"
+          onSelect={handleSelectCategoria}
+          onClose={() => setPendingIngredienteNombre(null)}
+        />
+      )}
     </div>
   );
 }

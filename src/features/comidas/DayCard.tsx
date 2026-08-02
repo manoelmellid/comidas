@@ -29,9 +29,14 @@ export function DayCard({ date, getComida, getPlatoNombre, onTapSlot }: DayCardP
 
         if (!comida) {
           valor = 'Añadir';
+        } else if (comida.generado === 'no_elaborar') {
+          valor = 'No elaborar';
+          valorClass = styles.valorNoElaborar;
+        } else if (comida.generado === 'fallido') {
+          valor = 'No generado';
+          valorClass = styles.valorFallido;
         } else if (comida.especial) {
-          const nombreEspecial = comida.especial === 'tupper' ? 'Tupper' : 'Fuera';
-          valor = comida.tags.length ? `${nombreEspecial} · ${comida.tags.join(', ')}` : nombreEspecial;
+          valor = comida.tags.length ? `Fuera · ${comida.tags.join(', ')}` : 'Fuera';
           valorClass = styles.valorEspecial;
         } else if (comida.platoId) {
           valor = getPlatoNombre(comida.platoId);

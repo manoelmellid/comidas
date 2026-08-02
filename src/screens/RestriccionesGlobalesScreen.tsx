@@ -3,34 +3,34 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
 import sheetStyles from '../styles/reglaSheet.module.css';
 import { Sheet } from '../components/Sheet';
-import { CATEGORIAS_SEED } from '../lib/categoriasSeed';
-import { getAllIngredientes, getAllPlatos, newId, type Ingrediente, type Plato } from '../lib/db';
+import { resolveValorNombre } from '../lib/reglaDisplay';
+import {
+  deleteReglaGlobal,
+  getAllCategorias,
+  getAllIngredientes,
+  getAllPlatos,
+  getAllReglasGlobales,
+  newId,
+  saveReglaGlobal,
+  type AplicaGlobal,
+  type Categoria,
+  type Ingrediente,
+  type ModoGlobal,
+  type Plato,
+  type ReglaGlobal,
+  type TipoObjetivoGlobal,
+} from '../lib/db';
 import type { LayoutContext } from '../lib/layoutContext';
 
-type TipoObjetivo = 'plato' | 'ingrediente' | 'categoria';
-type ModoGlobal = 'exacto' | 'minimo' | 'maximo';
-type Aplica = 'comida' | 'cena' | 'ambas';
-
-interface ReglaGlobal {
-  id: string;
-  tipo: TipoObjetivo;
-  valorId: string;
-  valorNombre: string;
-  dias: number;
-  modo: ModoGlobal;
-  aplica: Aplica;
-}
-
 interface Draft {
-  tipo: TipoObjetivo;
+  tipo: TipoObjetivoGlobal;
   valorId?: string;
-  valorNombre?: string;
   dias: number;
   modo: ModoGlobal;
-  aplica: Aplica;
+  aplica: AplicaGlobal;
 }
 
-const TIPO_OPCIONES: { tipo: TipoObjetivo; label: string }[] = [
+const TIPO_OPCIONES: { tipo: TipoObjetivoGlobal; label: string }[] = [
   { tipo: 'plato', label: 'Plato' },
   { tipo: 'ingrediente', label: 'Ingrediente' },
   { tipo: 'categoria', label: 'Categoría' },
@@ -42,7 +42,7 @@ const MODO_OPCIONES: { modo: ModoGlobal; label: string }[] = [
   { modo: 'maximo', label: 'Máximo' },
 ];
 
-const APLICA_OPCIONES: { aplica: Aplica; label: string }[] = [
+const APLICA_OPCIONES: { aplica: AplicaGlobal; label: string }[] = [
   { aplica: 'comida', label: 'Comida' },
   { aplica: 'cena', label: 'Cena' },
   { aplica: 'ambas', label: 'Ambas' },
@@ -54,7 +54,7 @@ function describeModo(modo: ModoGlobal): string {
   return modo === 'exacto' ? 'exacto' : modo === 'minimo' ? 'mínimo' : 'máximo';
 }
 
-function describeAplica(aplica: Aplica): string {
+function describeAplica(aplica: AplicaGlobal): string {
   return aplica === 'ambas' ? 'Comida y cena' : aplica === 'comida' ? 'Comida' : 'Cena';
 }
 
@@ -66,6 +66,8 @@ export function RestriccionesGlobalesScreen() {
   const [draft, setDraft] = useState<Draft>(DRAFT_INICIAL);
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setTopLeftBack({ label: 'Restricciones', onClick: () => navigate('/restricciones') });
@@ -73,36 +75,50 @@ export function RestriccionesGlobalesScreen() {
   }, [setTopLeftBack, navigate]);
 
   useEffect(() => {
-    Promise.all([getAllPlatos(), getAllIngredientes()]).then(([p, i]) => {
-      setPlatos(p);
-      setIngredientes(i);
-    });
+    Promise.all([getAllPlatos(), getAllIngredientes(), getAllCategorias(), getAllReglasGlobales()]).then(
+      ([p, i, c, r]) => {
+        setPlatos(p);
+        setIngredientes(i);
+        setCategorias(c);
+        setReglas(r);
+      },
+    );
   }, []);
 
   const opcionesValor: { id: string; nombre: string }[] = useMemo(() => {
     if (draft.tipo === 'plato') return platos.map((p) => ({ id: p.id, nombre: p.nombre }));
     if (draft.tipo === 'ingrediente') return ingredientes.map((i) => ({ id: i.id, nombre: i.nombre }));
-    return CATEGORIAS_SEED.map((c) => ({ id: c, nombre: c }));
-  }, [draft.tipo, platos, ingredientes]);
+    return categorias.map((c) => ({ id: c.id, nombre: c.nombre }));
+  }, [draft.tipo, platos, ingredientes, categorias]);
 
   function openCreate() {
     setDraft(DRAFT_INICIAL);
     setCreating(true);
   }
 
-  function commitDraft() {
-    if (!draft.valorId || !draft.valorNombre) return;
+  async function commitDraft() {
+    if (!draft.valorId) return;
     const regla: ReglaGlobal = {
       id: newId(),
       tipo: draft.tipo,
       valorId: draft.valorId,
-      valorNombre: draft.valorNombre,
       dias: draft.dias,
       modo: draft.modo,
       aplica: draft.aplica,
     };
+    await saveReglaGlobal(regla);
     setReglas((prev) => [...prev, regla]);
     setCreating(false);
+  }
+
+  async function handleDelete(id: string) {
+    if (confirmingDeleteId !== id) {
+      setConfirmingDeleteId(id);
+      return;
+    }
+    await deleteReglaGlobal(id);
+    setReglas((prev) => prev.filter((r) => r.id !== id));
+    setConfirmingDeleteId(null);
   }
 
   return (
@@ -114,8 +130,12 @@ export function RestriccionesGlobalesScreen() {
         {reglas.map((r) => (
           <div key={r.id} className={sharedStyles.row}>
             <span>
-              {r.valorNombre} · {describeModo(r.modo)} {r.dias} día(s) · {describeAplica(r.aplica)}
+              {resolveValorNombre(r.tipo, r.valorId, { platos, ingredientes, categorias })} · {describeModo(r.modo)}{' '}
+              {r.dias} día(s) · {describeAplica(r.aplica)}
             </span>
+            <button type="button" className={sharedStyles.rowDanger} onClick={() => handleDelete(r.id)}>
+              {confirmingDeleteId === r.id ? '¿Seguro?' : 'Eliminar'}
+            </button>
           </div>
         ))}
       </div>
@@ -135,7 +155,7 @@ export function RestriccionesGlobalesScreen() {
                 key={tipo}
                 type="button"
                 className={`${sheetStyles.segmentButton} ${draft.tipo === tipo ? sheetStyles.segmentButtonActive : ''}`}
-                onClick={() => setDraft((d) => ({ ...d, tipo, valorId: undefined, valorNombre: undefined }))}
+                onClick={() => setDraft((d) => ({ ...d, tipo, valorId: undefined }))}
               >
                 {label}
               </button>
@@ -152,7 +172,7 @@ export function RestriccionesGlobalesScreen() {
                 key={opt.id}
                 type="button"
                 className={`${sheetStyles.optionRow} ${draft.valorId === opt.id ? sheetStyles.optionRowSelected : ''}`}
-                onClick={() => setDraft((d) => ({ ...d, valorId: opt.id, valorNombre: opt.nombre }))}
+                onClick={() => setDraft((d) => ({ ...d, valorId: opt.id }))}
               >
                 {opt.nombre}
               </button>

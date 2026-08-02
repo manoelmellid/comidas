@@ -4,6 +4,7 @@ import { WeekNav } from '../features/comidas/WeekNav';
 import { DayCard } from '../features/comidas/DayCard';
 import { AsignarComidaSheet } from '../features/comidas/AsignarComidaSheet';
 import { getWeekDays, toISODate } from '../lib/week';
+import { generarSemana } from '../lib/generador';
 import {
   comidaId,
   getAllComidas,
@@ -96,8 +97,12 @@ export function ComidasScreen() {
     setSelection(null);
   }
 
-  function handleGenerar() {
-    alert('Aquí se generarán los próximos 7 días de comidas y cenas. (Ejemplo — la Fase 2.2 conecta esto a datos reales.)');
+  async function handleGenerar() {
+    const { incumplidas } = await generarSemana();
+    const [p, c] = await Promise.all([getAllPlatos(), getAllComidas()]);
+    setPlatos(p);
+    setComidas(c);
+    if (incumplidas.length > 0) alert(incumplidas.join('\n'));
   }
 
   if (loading) return null;
