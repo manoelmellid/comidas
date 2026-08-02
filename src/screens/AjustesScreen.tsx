@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import styles from './AjustesScreen.module.css';
 import { Sheet } from '../components/Sheet';
-import { exportBackup, importBackup } from '../lib/backup';
-import { clearAllData, getAllCategorias, getPreferencias, newId, saveCategoria, setPreferencias, type Categoria } from '../lib/db';
+import { getAllCategorias, getPreferencias, newId, saveCategoria, setPreferencias, type Categoria } from '../lib/db';
 import type { LayoutContext } from '../lib/layoutContext';
 
 interface EditingCategoria {
@@ -14,9 +13,6 @@ interface EditingCategoria {
 export function AjustesScreen() {
   const navigate = useNavigate();
   const { setTopLeftBack } = useOutletContext<LayoutContext>();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [confirmingClear, setConfirmingClear] = useState(false);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [editing, setEditing] = useState<EditingCategoria | null>(null);
   const [semanasAtras, setSemanasAtras] = useState(1);
@@ -32,28 +28,6 @@ export function AjustesScreen() {
       setSemanasAtras(prefs.semanasAtras);
     });
   }, []);
-
-  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    try {
-      await importBackup(file);
-      setStatus('Backup restaurado. Recarga la app para ver los datos.');
-    } catch {
-      setStatus('No se pudo leer ese archivo como backup válido.');
-    }
-  }
-
-  async function handleClearAll() {
-    if (!confirmingClear) {
-      setConfirmingClear(true);
-      return;
-    }
-    await clearAllData();
-    setConfirmingClear(false);
-    setStatus('Todos los datos han sido borrados.');
-  }
 
   async function commitCategoria() {
     const nombre = editing?.nombre.trim();
@@ -74,29 +48,6 @@ export function AjustesScreen() {
 
   return (
     <div>
-      <div className={styles.group}>
-        <button type="button" className={styles.row} onClick={() => exportBackup()}>
-          Exportar backup (.json)
-        </button>
-        <button type="button" className={styles.row} onClick={() => fileInputRef.current?.click()}>
-          Importar backup (.json)
-        </button>
-      </div>
-      <p className={styles.hint}>
-        El backup sustituye a la sincronización en la nube: descarga un archivo con todos tus datos (platos,
-        ingredientes y comidas planificadas) y podrás restaurarlo en este u otro dispositivo.
-      </p>
-
-      <div className={styles.group}>
-        <button type="button" className={`${styles.row} ${styles.rowDanger}`} onClick={handleClearAll}>
-          {confirmingClear ? '¿Seguro? Toca de nuevo para confirmar' : 'Borrar todos los datos'}
-        </button>
-      </div>
-
-      {status && <p className={styles.hint}>{status}</p>}
-
-      <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleImportFile} />
-
       <p className={styles.sectionLabel}>Categorías de ingrediente</p>
       <div className={styles.group}>
         {categorias.map((categoria) => (

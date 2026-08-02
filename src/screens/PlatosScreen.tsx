@@ -28,7 +28,7 @@ export function PlatosScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const { setTopLeftBack, setTitle, setTopRightAction } = useOutletContext<LayoutContext>();
+  const { setTopLeftBack, setTitle, setTopRightActions } = useOutletContext<LayoutContext>();
 
   useEffect(() => {
     Promise.all([getAllPlatos(), getAllIngredientes(), getAllCategorias(), getAllComidas()]).then(([p, i, c, cm]) => {
@@ -46,22 +46,24 @@ export function PlatosScreen() {
     if (selectedPlato) {
       setTitle(selectedPlato.nombre);
       setTopLeftBack({ label: 'Platos', onClick: () => setSelectedId(null) });
-      setTopRightAction(null);
+      setTopRightActions([]);
     } else {
       setTitle(null);
       setTopLeftBack(null);
-      setTopRightAction({
-        icon: <IconIngredientes />,
-        label: 'Ingredientes',
-        onClick: () => navigate('/ingredientes'),
-      });
+      setTopRightActions([
+        {
+          icon: <IconIngredientes />,
+          label: 'Ingredientes',
+          onClick: () => navigate('/ingredientes'),
+        },
+      ]);
     }
     return () => {
       setTitle(null);
       setTopLeftBack(null);
-      setTopRightAction(null);
+      setTopRightActions([]);
     };
-  }, [selectedPlato, setTitle, setTopLeftBack, setTopRightAction, navigate]);
+  }, [selectedPlato, setTitle, setTopLeftBack, setTopRightActions, navigate]);
 
   const filtered = useMemo(() => {
     const sorted = [...platos].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));

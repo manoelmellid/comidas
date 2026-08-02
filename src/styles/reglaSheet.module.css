@@ -46,7 +46,7 @@
   text-align: center;
   font-size: 15px;
   border-radius: var(--radius-control);
-  background: var(--color-bg);
+  background: var(--color-card);
   color: var(--color-text);
 }
 

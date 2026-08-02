@@ -37,6 +37,12 @@
   letter-spacing: -0.02em;
 }
 
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .gearButton {
   width: 36px;
   height: 36px;
