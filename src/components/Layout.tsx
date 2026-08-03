@@ -32,7 +32,18 @@ export function Layout() {
       // El teclado en iOS reduce visualViewport.height sin tocar innerHeight — a diferencia
       // de un simple focus/blur, esto no se dispara con el autoFocus programático de un
       // input si iOS decide no abrir el teclado (pasa al entrar en Platos/Ingredientes).
-      setKeyboardOpen(vv!.height < window.innerHeight - 150);
+      const keyboardLikely = vv!.height < window.innerHeight - 150;
+      setKeyboardOpen(keyboardLikely);
+      if (keyboardLikely) {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+          // Confirmado con el usuario (scrollTop se queda en 0 sin esto): el contenedor no se
+          // desplaza solo para dejar visible el campo activo en formularios largos como
+          // PlatoDetail. 'nearest' mueve lo mínimo imprescindible, sin animación para no competir
+          // con la propia animación de apertura del teclado.
+          setTimeout(() => active.scrollIntoView({ block: 'nearest' }), 50);
+        }
+      }
     }
 
     vv.addEventListener('resize', handleViewportResize);
