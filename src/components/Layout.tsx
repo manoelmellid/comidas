@@ -32,16 +32,7 @@ export function Layout() {
       // El teclado en iOS reduce visualViewport.height sin tocar innerHeight — a diferencia
       // de un simple focus/blur, esto no se dispara con el autoFocus programático de un
       // input si iOS decide no abrir el teclado (pasa al entrar en Platos/Ingredientes).
-      const keyboardLikely = vv!.height < window.innerHeight - 150;
-      setKeyboardOpen(keyboardLikely);
-      if (keyboardLikely) {
-        const active = document.activeElement;
-        if (active instanceof HTMLElement && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
-          // Fuerza un recálculo de scroll una vez el contenedor ya midió el alto reducido
-          // (el scroll-al-foco nativo de iOS a veces se dispara con la medida vieja).
-          setTimeout(() => active.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
-        }
-      }
+      setKeyboardOpen(vv!.height < window.innerHeight - 150);
     }
 
     vv.addEventListener('resize', handleViewportResize);
