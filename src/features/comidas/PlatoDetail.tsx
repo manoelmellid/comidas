@@ -3,6 +3,7 @@ import sharedStyles from './AsignarComidaSheet.module.css';
 import styles from './PlatoDetail.module.css';
 import { CategoriaPickerSheet } from '../../components/CategoriaPickerSheet';
 import type { Categoria, Ingrediente, Plato, PlatoIngrediente, TipoPlato } from '../../lib/db';
+import { normalizeText } from '../../lib/normalize';
 
 const TIPO_OPCIONES: { tipo: TipoPlato; label: string }[] = [
   { tipo: 'comida', label: 'Comida' },
@@ -43,15 +44,15 @@ export function PlatoDetail({
 
   const availableFiltered = useMemo(() => {
     const addedIds = new Set(items.map((i) => i.ingredienteId));
-    const q = addQuery.trim().toLowerCase();
+    const q = normalizeText(addQuery.trim());
     return ingredientes
       .filter((ing) => !addedIds.has(ing.id))
-      .filter((ing) => !q || ing.nombre.toLowerCase().includes(q))
+      .filter((ing) => !q || normalizeText(ing.nombre).includes(q))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
   }, [ingredientes, items, addQuery]);
 
   const exactIngredienteMatch = ingredientes.some(
-    (ing) => ing.nombre.toLowerCase() === addQuery.trim().toLowerCase(),
+    (ing) => normalizeText(ing.nombre) === normalizeText(addQuery.trim()),
   );
 
   function addExisting(ingredienteId: string) {
@@ -177,6 +178,10 @@ export function PlatoDetail({
         onChange={(e) => setAddQuery(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && addQuery.trim() && !exactIngredienteMatch) handleCreateIngrediente();
+        }}
+        onFocus={(e) => {
+          const target = e.currentTarget;
+          setTimeout(() => target.scrollIntoView({ block: 'start' }), 300);
         }}
       />
 

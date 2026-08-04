@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Sheet } from '../../components/Sheet';
 import styles from './AsignarComidaSheet.module.css';
 import { formatFullDayLabel, parseISODate } from '../../lib/week';
+import { normalizeText } from '../../lib/normalize';
 import type { Comida, Especial, Plato, TipoComida } from '../../lib/db';
 
 interface AsignarComidaSheetProps {
@@ -37,12 +38,12 @@ export function AsignarComidaSheet({
   const [tags, setTags] = useState<string[]>(currentComida?.tags ?? []);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeText(query.trim());
     if (!q) return platos;
-    return platos.filter((p) => p.nombre.toLowerCase().includes(q));
+    return platos.filter((p) => normalizeText(p.nombre).includes(q));
   }, [platos, query]);
 
-  const exactMatch = platos.some((p) => p.nombre.toLowerCase() === query.trim().toLowerCase());
+  const exactMatch = platos.some((p) => normalizeText(p.nombre) === normalizeText(query.trim()));
 
   async function handleCreateAndAssign() {
     const nombre = query.trim();

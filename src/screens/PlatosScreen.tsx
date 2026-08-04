@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { PlatoDetail } from '../features/comidas/PlatoDetail';
 import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
 import { IconIngredientes } from '../components/icons';
+import { normalizeText } from '../lib/normalize';
 import type { LayoutContext } from '../lib/layoutContext';
 import {
   deletePlato,
@@ -67,12 +68,12 @@ export function PlatosScreen() {
 
   const filtered = useMemo(() => {
     const sorted = [...platos].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-    const q = query.trim().toLowerCase();
+    const q = normalizeText(query.trim());
     if (!q) return sorted;
-    return sorted.filter((p) => p.nombre.toLowerCase().includes(q));
+    return sorted.filter((p) => normalizeText(p.nombre).includes(q));
   }, [platos, query]);
 
-  const exactMatch = platos.some((p) => p.nombre.toLowerCase() === query.trim().toLowerCase());
+  const exactMatch = platos.some((p) => normalizeText(p.nombre) === normalizeText(query.trim()));
 
   async function handleCreate() {
     const nombre = query.trim();
@@ -138,7 +139,6 @@ export function PlatosScreen() {
         onKeyDown={(e) => {
           if (e.key === 'Enter' && query.trim() && !exactMatch) handleCreate();
         }}
-        autoFocus
       />
 
       <div className={sharedStyles.group}>

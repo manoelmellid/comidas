@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
 import styles from './IngredientesScreen.module.css';
 import { CategoriaPickerSheet } from '../components/CategoriaPickerSheet';
+import { normalizeText } from '../lib/normalize';
 import {
   deleteIngrediente,
   getAllCategorias,
@@ -46,12 +47,12 @@ export function IngredientesScreen() {
 
   const filtered = useMemo(() => {
     const sorted = [...ingredientes].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-    const q = query.trim().toLowerCase();
+    const q = normalizeText(query.trim());
     if (!q) return sorted;
-    return sorted.filter((i) => i.nombre.toLowerCase().includes(q));
+    return sorted.filter((i) => normalizeText(i.nombre).includes(q));
   }, [ingredientes, query]);
 
-  const exactMatch = ingredientes.some((i) => i.nombre.toLowerCase() === query.trim().toLowerCase());
+  const exactMatch = ingredientes.some((i) => normalizeText(i.nombre) === normalizeText(query.trim()));
 
   function usageCount(id: string): number {
     return platos.filter((p) => p.ingredientes.some((pi) => pi.ingredienteId === id)).length;
@@ -128,7 +129,6 @@ export function IngredientesScreen() {
         onKeyDown={(e) => {
           if (e.key === 'Enter' && query.trim() && !exactMatch) handleCreate();
         }}
-        autoFocus
       />
 
       <div className={sharedStyles.group}>
