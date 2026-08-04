@@ -4,6 +4,7 @@
   left: 0;
   right: 0;
   height: var(--app-height, 100vh);
+  transform: translateY(var(--app-offset-top, 0px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
