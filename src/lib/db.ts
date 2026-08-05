@@ -257,6 +257,42 @@ export async function deleteCategoria(id: string): Promise<void> {
   await db.delete('categorias', id);
 }
 
+/** Reasigna ingredientes y reglas que apuntaban a `fromId` hacia `toId`, y borra `fromId`. */
+export async function mergeCategoria(fromId: string, toId: string): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(['categorias', 'ingredientes', 'reglasDiarias', 'reglasGlobales'], 'readwrite');
+
+  const ingredientesStore = tx.objectStore('ingredientes');
+  let ingredienteCursor = await ingredientesStore.openCursor();
+  while (ingredienteCursor) {
+    if (ingredienteCursor.value.categoriaId === fromId) {
+      await ingredienteCursor.update({ ...ingredienteCursor.value, categoriaId: toId });
+    }
+    ingredienteCursor = await ingredienteCursor.continue();
+  }
+
+  const reglasDiariasStore = tx.objectStore('reglasDiarias');
+  let reglaDiariaCursor = await reglasDiariasStore.openCursor();
+  while (reglaDiariaCursor) {
+    if (reglaDiariaCursor.value.tipo === 'categoria' && reglaDiariaCursor.value.valorId === fromId) {
+      await reglaDiariaCursor.update({ ...reglaDiariaCursor.value, valorId: toId });
+    }
+    reglaDiariaCursor = await reglaDiariaCursor.continue();
+  }
+
+  const reglasGlobalesStore = tx.objectStore('reglasGlobales');
+  let reglaGlobalCursor = await reglasGlobalesStore.openCursor();
+  while (reglaGlobalCursor) {
+    if (reglaGlobalCursor.value.tipo === 'categoria' && reglaGlobalCursor.value.valorId === fromId) {
+      await reglaGlobalCursor.update({ ...reglaGlobalCursor.value, valorId: toId });
+    }
+    reglaGlobalCursor = await reglaGlobalCursor.continue();
+  }
+
+  await tx.objectStore('categorias').delete(fromId);
+  await tx.done;
+}
+
 // ---------------------------------------------------------------------------
 // Reglas diarias (14 filas direccionables por día de la semana × tipo de comida)
 // ---------------------------------------------------------------------------

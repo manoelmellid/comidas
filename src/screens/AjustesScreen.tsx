@@ -1,8 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import styles from './AjustesScreen.module.css';
 import { Sheet } from '../components/Sheet';
-import { getAllCategorias, getPreferencias, newId, saveCategoria, setPreferencias, type Categoria } from '../lib/db';
+import { CategoriaPickerSheet } from '../components/CategoriaPickerSheet';
+import { CATEGORIA_FALLBACK_ID } from '../lib/categoriasSeed';
+import {
+  deleteCategoria,
+  getAllCategorias,
+  getAllIngredientes,
+  getAllReglasDiarias,
+  getAllReglasGlobales,
+  getPreferencias,
+  mergeCategoria,
+  newId,
+  saveCategoria,
+  setPreferencias,
+  type Categoria,
+  type Ingrediente,
+  type ReglaDiaria,
+  type ReglaGlobal,
+} from '../lib/db';
 import type { LayoutContext } from '../lib/layoutContext';
 
 interface EditingCategoria {
@@ -14,7 +31,12 @@ export function AjustesScreen() {
   const navigate = useNavigate();
   const { setTopLeftBack } = useOutletContext<LayoutContext>();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [reglasDiarias, setReglasDiarias] = useState<ReglaDiaria[]>([]);
+  const [reglasGlobales, setReglasGlobales] = useState<ReglaGlobal[]>([]);
   const [editing, setEditing] = useState<EditingCategoria | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [mergeFrom, setMergeFrom] = useState<Categoria | null>(null);
   const [semanasAtras, setSemanasAtras] = useState(1);
 
   useEffect(() => {
@@ -22,12 +44,33 @@ export function AjustesScreen() {
     return () => setTopLeftBack(null);
   }, [setTopLeftBack, navigate]);
 
+  async function reloadCategoriasUso() {
+    const [c, i, rd, rg] = await Promise.all([
+      getAllCategorias(),
+      getAllIngredientes(),
+      getAllReglasDiarias(),
+      getAllReglasGlobales(),
+    ]);
+    setCategorias(c);
+    setIngredientes(i);
+    setReglasDiarias(rd);
+    setReglasGlobales(rg);
+  }
+
   useEffect(() => {
-    Promise.all([getAllCategorias(), getPreferencias()]).then(([c, prefs]) => {
-      setCategorias(c);
-      setSemanasAtras(prefs.semanasAtras);
-    });
+    reloadCategoriasUso();
+    getPreferencias().then((prefs) => setSemanasAtras(prefs.semanasAtras));
   }, []);
+
+  const usoCategoria = useMemo(() => {
+    if (!editing?.id) return 0;
+    const id = editing.id;
+    return (
+      ingredientes.filter((i) => i.categoriaId === id).length +
+      reglasDiarias.filter((r) => r.tipo === 'categoria' && r.valorId === id).length +
+      reglasGlobales.filter((r) => r.tipo === 'categoria' && r.valorId === id).length
+    );
+  }, [editing, ingredientes, reglasDiarias, reglasGlobales]);
 
   async function commitCategoria() {
     const nombre = editing?.nombre.trim();
@@ -39,6 +82,30 @@ export function AjustesScreen() {
       );
     }
     setEditing(null);
+  }
+
+  async function handleDeleteClick() {
+    if (!editing?.id) return;
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    if (usoCategoria > 0) {
+      setMergeFrom({ id: editing.id, nombre: editing.nombre });
+      setEditing(null);
+    } else {
+      await deleteCategoria(editing.id);
+      setCategorias((prev) => prev.filter((c) => c.id !== editing.id));
+      setEditing(null);
+    }
+    setConfirmingDelete(false);
+  }
+
+  async function handleMergeSelect(toId: string) {
+    if (!mergeFrom) return;
+    await mergeCategoria(mergeFrom.id, toId);
+    await reloadCategoriasUso();
+    setMergeFrom(null);
   }
 
   async function updateSemanasAtras(nuevo: number) {
@@ -55,7 +122,10 @@ export function AjustesScreen() {
             type="button"
             key={categoria.id}
             className={styles.row}
-            onClick={() => setEditing({ id: categoria.id, nombre: categoria.nombre })}
+            onClick={() => {
+              setEditing({ id: categoria.id, nombre: categoria.nombre });
+              setConfirmingDelete(false);
+            }}
           >
             <span>{categoria.nombre}</span>
             <span className={styles.rowSecondary}>›</span>
@@ -98,7 +168,13 @@ export function AjustesScreen() {
       <p className={styles.hint}>En 0, la anti-repetición se desactiva del todo.</p>
 
       {editing && (
-        <Sheet title={editing.id === null ? 'Nueva categoría' : 'Renombrar categoría'} onClose={() => setEditing(null)}>
+        <Sheet
+          title={editing.id === null ? 'Nueva categoría' : 'Renombrar categoría'}
+          onClose={() => {
+            setEditing(null);
+            setConfirmingDelete(false);
+          }}
+        >
           <input
             className={styles.sheetInput}
             placeholder="Nombre de la categoría…"
@@ -112,7 +188,31 @@ export function AjustesScreen() {
           <button type="button" className={styles.saveButton} onClick={commitCategoria}>
             Guardar
           </button>
+
+          {editing.id !== null &&
+            (editing.id === CATEGORIA_FALLBACK_ID ? (
+              <p className={styles.hint}>Esta categoría es la de reserva del sistema y no se puede eliminar.</p>
+            ) : (
+              <div className={styles.group}>
+                <button type="button" className={`${styles.row} ${styles.rowDanger}`} onClick={handleDeleteClick}>
+                  {confirmingDelete
+                    ? usoCategoria > 0
+                      ? 'Está en uso: se fusionará con otra categoría que elijas. Toca de nuevo para confirmar'
+                      : '¿Seguro? Toca de nuevo para confirmar'
+                    : 'Eliminar categoría'}
+                </button>
+              </div>
+            ))}
         </Sheet>
+      )}
+
+      {mergeFrom && (
+        <CategoriaPickerSheet
+          categorias={categorias.filter((c) => c.id !== mergeFrom.id)}
+          title={`Fusionar "${mergeFrom.nombre}" con…`}
+          onSelect={handleMergeSelect}
+          onClose={() => setMergeFrom(null)}
+        />
       )}
     </div>
   );
