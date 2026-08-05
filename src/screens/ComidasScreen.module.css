@@ -1,3 +1,11 @@
+.stickyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--color-bg);
+  padding-bottom: 2px;
+}
+
 .generarButton {
   display: block;
   width: 100%;

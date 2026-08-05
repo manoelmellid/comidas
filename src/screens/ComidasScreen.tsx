@@ -31,6 +31,7 @@ export function ComidasScreen() {
   const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState<SlotSelection | null>(null);
   const todayCardRef = useRef<HTMLDivElement | null>(null);
+  const stickyHeaderRef = useRef<HTMLDivElement | null>(null);
   const hasScrolledToTodayRef = useRef(false);
 
   useEffect(() => {
@@ -45,10 +46,12 @@ export function ComidasScreen() {
 
   useEffect(() => {
     if (weekOffset !== 0 || loading) return;
-    todayCardRef.current?.scrollIntoView({
-      block: 'start',
-      behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto',
-    });
+    const container = document.querySelector<HTMLElement>('.app-content-scroll');
+    const card = todayCardRef.current;
+    if (!container || !card) return;
+    const headerHeight = stickyHeaderRef.current?.getBoundingClientRect().height ?? 0;
+    const delta = card.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight;
+    container.scrollBy({ top: delta, behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto' });
     hasScrolledToTodayRef.current = true;
   }, [weekOffset, loading]);
 
@@ -120,11 +123,13 @@ export function ComidasScreen() {
 
   return (
     <div>
-      <WeekNav days={days} weekOffset={weekOffset} onChangeOffset={setWeekOffset} />
+      <div ref={stickyHeaderRef} className={styles.stickyHeader}>
+        <WeekNav days={days} weekOffset={weekOffset} onChangeOffset={setWeekOffset} />
 
-      <button type="button" className={styles.generarButton} onClick={handleGenerar}>
-        Generar próximos 7 días
-      </button>
+        <button type="button" className={styles.generarButton} onClick={handleGenerar}>
+          Generar próximos 7 días
+        </button>
+      </div>
 
       {days.map((date) => {
         const fecha = toISODate(date);
