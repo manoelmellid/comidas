@@ -1,0 +1,59 @@
+.dateHeader {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0 4px 20px;
+}
+
+.mealCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px 22px;
+  margin-bottom: 14px;
+}
+
+.mealLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mealValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.valorVacio {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.valorEspecial {
+  color: var(--color-accent);
+}
+
+.valorEliminado {
+  color: var(--color-danger);
+}
+
+.valorNoElaborar {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.valorFallido {
+  color: var(--color-warning);
+}

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import styles from './HoyScreen.module.css';
 import { BackupSheet } from '../components/BackupSheet';
 import { IconAjustes, IconArrowUpDown } from '../components/icons';
-import { DayCard } from '../features/comidas/DayCard';
 import { AsignarComidaSheet } from '../features/comidas/AsignarComidaSheet';
-import { toISODate } from '../lib/week';
+import { resolveComidaDisplay, type ComidaDisplayVariant } from '../lib/comidaDisplay';
+import { formatFullDayLabel, toISODate } from '../lib/week';
 import {
   comidaId,
   getAllComidas,
@@ -19,6 +20,20 @@ import {
   type TipoComida,
 } from '../lib/db';
 import type { LayoutContext } from '../lib/layoutContext';
+
+const TIPOS: { tipo: TipoComida; label: string }[] = [
+  { tipo: 'comida', label: 'Comida' },
+  { tipo: 'cena', label: 'Cena' },
+];
+
+const VALOR_CLASS: Record<ComidaDisplayVariant, string> = {
+  vacio: styles.valorVacio,
+  especial: styles.valorEspecial,
+  eliminado: styles.valorEliminado,
+  no_elaborar: styles.valorNoElaborar,
+  fallido: styles.valorFallido,
+  normal: '',
+};
 
 export function HoyScreen() {
   const navigate = useNavigate();
@@ -94,7 +109,22 @@ export function HoyScreen() {
 
   return (
     <>
-      <DayCard date={today} getComida={getComida} getPlatoNombre={getPlatoNombre} onTapSlot={setSelectedTipo} />
+      <p className={styles.dateHeader}>{formatFullDayLabel(today)}</p>
+
+      {TIPOS.map(({ tipo, label }) => {
+        const { texto, variant } = resolveComidaDisplay(getComida(tipo), getPlatoNombre);
+        return (
+          <button
+            key={tipo}
+            type="button"
+            className={styles.mealCard}
+            onClick={() => setSelectedTipo(tipo)}
+          >
+            <span className={styles.mealLabel}>{label}</span>
+            <span className={`${styles.mealValue} ${VALOR_CLASS[variant]}`}>{texto}</span>
+          </button>
+        );
+      })}
 
       {selectedTipo && (
         <AsignarComidaSheet

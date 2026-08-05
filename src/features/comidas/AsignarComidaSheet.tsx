@@ -114,7 +114,6 @@ export function AsignarComidaSheet({
         placeholder="Buscar o crear plato…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        autoFocus
       />
 
       {currentComida && (

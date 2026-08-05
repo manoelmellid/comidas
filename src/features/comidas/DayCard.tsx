@@ -1,11 +1,21 @@
 import styles from './DayCard.module.css';
 import { formatDayLabel, isSameDate } from '../../lib/week';
+import { resolveComidaDisplay, type ComidaDisplayVariant } from '../../lib/comidaDisplay';
 import type { Comida, TipoComida } from '../../lib/db';
 
 const TIPOS: { tipo: TipoComida; label: string }[] = [
   { tipo: 'comida', label: 'Comida' },
   { tipo: 'cena', label: 'Cena' },
 ];
+
+const VALOR_CLASS: Record<ComidaDisplayVariant, string> = {
+  vacio: styles.valorVacio,
+  especial: styles.valorEspecial,
+  eliminado: styles.valorEliminado,
+  no_elaborar: styles.valorNoElaborar,
+  fallido: styles.valorFallido,
+  normal: '',
+};
 
 interface DayCardProps {
   date: Date;
@@ -23,27 +33,7 @@ export function DayCard({ date, getComida, getPlatoNombre, onTapSlot }: DayCardP
         {formatDayLabel(date)}
       </p>
       {TIPOS.map(({ tipo, label }) => {
-        const comida = getComida(tipo);
-        let valor: string;
-        let valorClass = styles.valorVacio;
-
-        if (!comida) {
-          valor = 'Añadir';
-        } else if (comida.generado === 'no_elaborar') {
-          valor = 'No elaborar';
-          valorClass = styles.valorNoElaborar;
-        } else if (comida.generado === 'fallido') {
-          valor = 'No generado';
-          valorClass = styles.valorFallido;
-        } else if (comida.especial) {
-          valor = comida.tags.length ? `Fuera · ${comida.tags.join(', ')}` : 'Fuera';
-          valorClass = styles.valorEspecial;
-        } else if (comida.platoId) {
-          valor = getPlatoNombre(comida.platoId);
-          valorClass = valor === '(eliminado)' ? styles.valorEliminado : '';
-        } else {
-          valor = 'Añadir';
-        }
+        const { texto, variant } = resolveComidaDisplay(getComida(tipo), getPlatoNombre);
 
         return (
           <button
@@ -53,7 +43,7 @@ export function DayCard({ date, getComida, getPlatoNombre, onTapSlot }: DayCardP
             onClick={() => onTapSlot(tipo)}
           >
             <span className={styles.tipo}>{label}</span>
-            <span className={`${styles.valor} ${valorClass}`}>{valor}</span>
+            <span className={`${styles.valor} ${VALOR_CLASS[variant]}`}>{texto}</span>
           </button>
         );
       })}

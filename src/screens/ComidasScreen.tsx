@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styles from './ComidasScreen.module.css';
 import { WeekNav } from '../features/comidas/WeekNav';
 import { DayCard } from '../features/comidas/DayCard';
 import { AsignarComidaSheet } from '../features/comidas/AsignarComidaSheet';
-import { getWeekDays, toISODate } from '../lib/week';
+import { getWeekDays, isSameDate, toISODate } from '../lib/week';
 import { generarSemana } from '../lib/generador';
 import {
   comidaId,
@@ -30,6 +30,8 @@ export function ComidasScreen() {
   const [comidas, setComidas] = useState<Comida[]>([]);
   const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState<SlotSelection | null>(null);
+  const todayCardRef = useRef<HTMLDivElement | null>(null);
+  const hasScrolledToTodayRef = useRef(false);
 
   useEffect(() => {
     Promise.all([getAllPlatos(), getAllComidas()]).then(([p, c]) => {
@@ -40,6 +42,15 @@ export function ComidasScreen() {
   }, []);
 
   const days = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
+
+  useEffect(() => {
+    if (weekOffset !== 0 || loading) return;
+    todayCardRef.current?.scrollIntoView({
+      block: 'start',
+      behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto',
+    });
+    hasScrolledToTodayRef.current = true;
+  }, [weekOffset, loading]);
 
   function getComida(fecha: string, tipo: TipoComida): Comida | undefined {
     return comidas.find((c) => c.id === comidaId(fecha, tipo));
@@ -117,14 +128,16 @@ export function ComidasScreen() {
 
       {days.map((date) => {
         const fecha = toISODate(date);
+        const isToday = isSameDate(date, new Date());
         return (
-          <DayCard
-            key={fecha}
-            date={date}
-            getComida={(tipo) => getComida(fecha, tipo)}
-            getPlatoNombre={getPlatoNombre}
-            onTapSlot={(tipo) => setSelection({ fecha, tipo })}
-          />
+          <div key={fecha} ref={isToday ? todayCardRef : undefined}>
+            <DayCard
+              date={date}
+              getComida={(tipo) => getComida(fecha, tipo)}
+              getPlatoNombre={getPlatoNombre}
+              onTapSlot={(tipo) => setSelection({ fecha, tipo })}
+            />
+          </div>
         );
       })}
 
