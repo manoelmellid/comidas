@@ -46,13 +46,28 @@ export function ComidasScreen() {
 
   useEffect(() => {
     if (weekOffset !== 0 || loading) return;
-    const container = document.querySelector<HTMLElement>('.app-content-scroll');
-    const card = todayCardRef.current;
-    if (!container || !card) return;
-    const headerHeight = stickyHeaderRef.current?.getBoundingClientRect().height ?? 0;
-    const delta = card.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight;
-    container.scrollBy({ top: delta, behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto' });
-    hasScrolledToTodayRef.current = true;
+
+    function scrollToToday() {
+      const container = document.querySelector<HTMLElement>('.app-content-scroll');
+      const card = todayCardRef.current;
+      if (!container || !card) return;
+      const headerHeight = stickyHeaderRef.current?.getBoundingClientRect().height ?? 0;
+      const delta = card.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight;
+      if (Math.abs(delta) < 1) return;
+      container.scrollBy({ top: delta, behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto' });
+      hasScrolledToTodayRef.current = true;
+    }
+
+    // Doble rAF: espera a que el layout real (tras montar la cabecera sticky y las 7 tarjetas) esté
+    // asentado antes de medir — en el dispositivo real un solo rAF no siempre basta.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(scrollToToday);
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
   }, [weekOffset, loading]);
 
   function getComida(fecha: string, tipo: TipoComida): Comida | undefined {
