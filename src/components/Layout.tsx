@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import styles from './Layout.module.css';
 import { TopBar, type TopBarAction, type TopBarBack } from './TopBar';
@@ -21,7 +21,20 @@ export function Layout() {
   const [topRightActions, setTopRightActions] = useState<TopBarAction[]>([]);
   const [topLeftBack, setTopLeftBack] = useState<TopBarBack | null>(null);
   const [customTitle, setCustomTitle] = useState<string | null>(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const title = customTitle ?? TITLES[location.pathname] ?? 'Comidas';
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    function handleResize() {
+      setKeyboardOpen(vv!.height < window.innerHeight - 150);
+    }
+
+    vv.addEventListener('resize', handleResize);
+    return () => vv.removeEventListener('resize', handleResize);
+  }, []);
 
   const setTitle = useCallback((t: string | null) => setCustomTitle(t), []);
   const context = useMemo<LayoutContext>(
@@ -35,7 +48,7 @@ export function Layout() {
       <main className={`${styles.content} app-content-scroll`}>
         <Outlet context={context} />
       </main>
-      <TabBar />
+      {!keyboardOpen && <TabBar />}
     </div>
   );
 }
