@@ -53,6 +53,13 @@
   line-height: 1.4;
 }
 
+.version {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 24px 4px 4px;
+}
+
 .stepperRow {
   display: flex;
   align-items: center;

@@ -59,6 +59,8 @@ export function BackupSheet({ onClose }: BackupSheetProps) {
       {status && <p className={styles.hint}>{status}</p>}
 
       <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleImportFile} />
+
+      <p className={styles.version}>Versión {__APP_VERSION__}</p>
     </Sheet>
   );
 }
