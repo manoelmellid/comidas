@@ -31,7 +31,7 @@ export function ComidasScreen() {
   const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState<SlotSelection | null>(null);
   const todayCardRef = useRef<HTMLDivElement | null>(null);
-  const stickyHeaderRef = useRef<HTMLDivElement | null>(null);
+  const dayListRef = useRef<HTMLDivElement | null>(null);
   const hasScrolledToTodayRef = useRef(false);
 
   useEffect(() => {
@@ -48,17 +48,16 @@ export function ComidasScreen() {
     if (weekOffset !== 0 || loading) return;
 
     function scrollToToday() {
-      const container = document.querySelector<HTMLElement>('.app-content-scroll');
+      const container = dayListRef.current;
       const card = todayCardRef.current;
       if (!container || !card) return;
-      const headerHeight = stickyHeaderRef.current?.getBoundingClientRect().height ?? 0;
-      const delta = card.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight;
+      const delta = card.getBoundingClientRect().top - container.getBoundingClientRect().top;
       if (Math.abs(delta) < 1) return;
       container.scrollBy({ top: delta, behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto' });
       hasScrolledToTodayRef.current = true;
     }
 
-    // Doble rAF: espera a que el layout real (tras montar la cabecera sticky y las 7 tarjetas) esté
+    // Doble rAF: espera a que el layout real (cabecera + zona de scroll de los días) esté
     // asentado antes de medir — en el dispositivo real un solo rAF no siempre basta.
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => {
@@ -137,8 +136,8 @@ export function ComidasScreen() {
   if (loading) return null;
 
   return (
-    <div>
-      <div ref={stickyHeaderRef} className={styles.stickyHeader}>
+    <div className={styles.screen}>
+      <div className={styles.header}>
         <WeekNav days={days} weekOffset={weekOffset} onChangeOffset={setWeekOffset} />
 
         <button type="button" className={styles.generarButton} onClick={handleGenerar}>
@@ -146,20 +145,22 @@ export function ComidasScreen() {
         </button>
       </div>
 
-      {days.map((date) => {
-        const fecha = toISODate(date);
-        const isToday = isSameDate(date, new Date());
-        return (
-          <div key={fecha} ref={isToday ? todayCardRef : undefined}>
-            <DayCard
-              date={date}
-              getComida={(tipo) => getComida(fecha, tipo)}
-              getPlatoNombre={getPlatoNombre}
-              onTapSlot={(tipo) => setSelection({ fecha, tipo })}
-            />
-          </div>
-        );
-      })}
+      <div className={styles.dayList} ref={dayListRef}>
+        {days.map((date) => {
+          const fecha = toISODate(date);
+          const isToday = isSameDate(date, new Date());
+          return (
+            <div key={fecha} ref={isToday ? todayCardRef : undefined}>
+              <DayCard
+                date={date}
+                getComida={(tipo) => getComida(fecha, tipo)}
+                getPlatoNombre={getPlatoNombre}
+                onTapSlot={(tipo) => setSelection({ fecha, tipo })}
+              />
+            </div>
+          );
+        })}
+      </div>
 
       {selection && (
         <AsignarComidaSheet
