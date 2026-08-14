@@ -160,11 +160,11 @@ export function PlatosScreen() {
         )}
         {filtered.map((p) => (
           <button key={p.id} type="button" className={sharedStyles.row} onClick={() => setSelectedId(p.id)}>
-            <span className={styles.nombreWrap}>
-              <span className={styles.nombre}>{p.nombre}</span>
+            <span className={styles.nombre}>{p.nombre}</span>
+            <span className={styles.right}>
               <span className={styles.tipo}>{TIPO_LABEL[p.tipo ?? 'ambas']}</span>
+              <span className={sharedStyles.rowSecondary}>›</span>
             </span>
-            <span className={sharedStyles.rowSecondary}>›</span>
           </button>
         ))}
       </div>

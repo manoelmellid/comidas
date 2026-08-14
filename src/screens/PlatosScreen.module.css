@@ -1,19 +1,20 @@
-.nombreWrap {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
 .nombre {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.right {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .tipo {
   font-size: 13px;
   font-weight: 600;
   color: var(--color-accent);
-  flex-shrink: 0;
 }
