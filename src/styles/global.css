@@ -16,7 +16,7 @@ body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  background: red; /* DEBUG temporal — quitar tras identificar el hueco del rebote en Semana */
+  background: var(--color-bg);
   color: var(--color-text);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;

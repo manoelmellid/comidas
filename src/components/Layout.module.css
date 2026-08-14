@@ -8,7 +8,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: yellow; /* DEBUG temporal */
 }
 
 .content {
@@ -17,7 +16,7 @@
   flex-direction: column;
   overflow-y: auto;
   overscroll-behavior: none;
-  background: orange; /* DEBUG temporal — normalmente var(--color-bg) */
-  padding: 8px max(16px, var(--safe-right)) calc(var(--tab-bar-height) + 6px + 24px)
+  background: var(--color-bg);
+  padding: 8px max(16px, var(--safe-right)) calc(var(--tab-bar-height) + 6px + 8px)
     max(16px, var(--safe-left));
 }
