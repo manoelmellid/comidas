@@ -50,6 +50,10 @@
   color: var(--color-text-secondary);
 }
 
+.valorNormal {
+  font-weight: 600;
+}
+
 .valorEspecial {
   color: var(--color-accent);
 }

@@ -49,6 +49,7 @@ export function ComidasScreen() {
     if (loading) return;
 
     if (weekOffset !== 0) {
+      if (dayListRef.current) dayListRef.current.scrollTop = 0;
       setReadyToReveal(true);
       return;
     }

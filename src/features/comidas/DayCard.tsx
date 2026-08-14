@@ -14,7 +14,7 @@ const VALOR_CLASS: Record<ComidaDisplayVariant, string> = {
   eliminado: styles.valorEliminado,
   no_elaborar: styles.valorNoElaborar,
   fallido: styles.valorFallido,
-  normal: '',
+  normal: styles.valorNormal,
 };
 
 interface DayCardProps {
