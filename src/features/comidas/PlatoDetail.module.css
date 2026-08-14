@@ -108,3 +108,8 @@
 .notas::placeholder {
   color: var(--color-text-secondary);
 }
+
+.deleteButton {
+  justify-content: center;
+  text-align: center;
+}

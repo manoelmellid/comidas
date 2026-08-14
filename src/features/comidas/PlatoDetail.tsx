@@ -230,7 +230,7 @@ export function PlatoDetail({
       <div className={sharedStyles.group}>
         <button
           type="button"
-          className={`${sharedStyles.row} ${sharedStyles.rowDanger}`}
+          className={`${sharedStyles.row} ${sharedStyles.rowDanger} ${styles.deleteButton}`}
           onClick={handleDeleteClick}
         >
           {confirmingDelete

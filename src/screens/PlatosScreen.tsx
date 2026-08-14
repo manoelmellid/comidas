@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { PlatoDetail } from '../features/comidas/PlatoDetail';
 import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
+import styles from './PlatosScreen.module.css';
 import { IconIngredientes } from '../components/icons';
 import { normalizeText } from '../lib/normalize';
 import type { LayoutContext } from '../lib/layoutContext';
@@ -18,7 +19,14 @@ import {
   type Comida,
   type Ingrediente,
   type Plato,
+  type TipoPlato,
 } from '../lib/db';
+
+const TIPO_LABEL: Record<TipoPlato, string> = {
+  comida: 'Comida',
+  cena: 'Cena',
+  ambas: 'Ambas',
+};
 
 export function PlatosScreen() {
   const navigate = useNavigate();
@@ -152,7 +160,10 @@ export function PlatosScreen() {
         )}
         {filtered.map((p) => (
           <button key={p.id} type="button" className={sharedStyles.row} onClick={() => setSelectedId(p.id)}>
-            <span>{p.nombre}</span>
+            <span className={styles.nombreWrap}>
+              <span className={styles.nombre}>{p.nombre}</span>
+              <span className={styles.tipo}>{TIPO_LABEL[p.tipo ?? 'ambas']}</span>
+            </span>
             <span className={sharedStyles.rowSecondary}>›</span>
           </button>
         ))}
