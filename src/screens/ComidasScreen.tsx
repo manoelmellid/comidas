@@ -33,6 +33,7 @@ export function ComidasScreen() {
   const todayCardRef = useRef<HTMLDivElement | null>(null);
   const dayListRef = useRef<HTMLDivElement | null>(null);
   const hasScrolledToTodayRef = useRef(false);
+  const [readyToReveal, setReadyToReveal] = useState(false);
 
   useEffect(() => {
     Promise.all([getAllPlatos(), getAllComidas()]).then(([p, c]) => {
@@ -45,27 +46,36 @@ export function ComidasScreen() {
   const days = useMemo(() => getWeekDays(weekOffset), [weekOffset]);
 
   useEffect(() => {
-    if (weekOffset !== 0 || loading) return;
+    if (loading) return;
+
+    if (weekOffset !== 0) {
+      setReadyToReveal(true);
+      return;
+    }
 
     function scrollToToday() {
       const container = dayListRef.current;
       const card = todayCardRef.current;
-      if (!container || !card) return;
-      const delta = card.getBoundingClientRect().top - container.getBoundingClientRect().top;
-      if (Math.abs(delta) < 1) return;
-      container.scrollBy({ top: delta, behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto' });
-      hasScrolledToTodayRef.current = true;
+      if (container && card) {
+        const delta = card.getBoundingClientRect().top - container.getBoundingClientRect().top;
+        if (Math.abs(delta) >= 1) {
+          container.scrollBy({ top: delta, behavior: hasScrolledToTodayRef.current ? 'smooth' : 'auto' });
+        }
+        hasScrolledToTodayRef.current = true;
+      }
+      setReadyToReveal(true);
     }
 
     // Doble rAF: espera a que el layout real (cabecera + zona de scroll de los días) esté
-    // asentado antes de medir — en el dispositivo real un solo rAF no siempre basta.
+    // asentado antes de medir. La lista sigue oculta (readyToReveal) hasta este primer intento,
+    // para que la colocación inicial nunca se vea como un salto — solo se revela ya en su sitio.
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(scrollToToday);
     });
     // Corrección de respaldo: en el dispositivo real, algo (fuentes, iconos) puede
     // asentarse un poco más tarde que dos frames — un reintento sin animación corrige
-    // cualquier desajuste residual sin que se note como un segundo scroll.
+    // cualquier desajuste residual. Como ya está revelada, se ve como un ajuste suave, no un salto.
     const retryTimeout = setTimeout(scrollToToday, 350);
     return () => {
       cancelAnimationFrame(raf1);
@@ -150,7 +160,10 @@ export function ComidasScreen() {
         </button>
       </div>
 
-      <div className={styles.dayList} ref={dayListRef}>
+      <div
+        className={`${styles.dayList} ${readyToReveal ? '' : styles.dayListHidden}`}
+        ref={dayListRef}
+      >
         {days.map((date) => {
           const fecha = toISODate(date);
           const isToday = isSameDate(date, new Date());

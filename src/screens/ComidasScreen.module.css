@@ -15,6 +15,12 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* Oculta la lista hasta que el auto-scroll a hoy ya se haya colocado, para que la
+   posición inicial nunca se vea como un salto — solo se revela ya en su sitio. */
+.dayListHidden {
+  visibility: hidden;
+}
+
 .generarButton {
   display: block;
   width: 100%;
