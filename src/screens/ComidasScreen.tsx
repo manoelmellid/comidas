@@ -63,9 +63,14 @@ export function ComidasScreen() {
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(scrollToToday);
     });
+    // Corrección de respaldo: en el dispositivo real, algo (fuentes, iconos) puede
+    // asentarse un poco más tarde que dos frames — un reintento sin animación corrige
+    // cualquier desajuste residual sin que se note como un segundo scroll.
+    const retryTimeout = setTimeout(scrollToToday, 350);
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
+      clearTimeout(retryTimeout);
     };
   }, [weekOffset, loading]);
 
