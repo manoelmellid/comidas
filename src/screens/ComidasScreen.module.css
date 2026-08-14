@@ -3,10 +3,12 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  background: magenta; /* DEBUG temporal */
 }
 
 .header {
   flex-shrink: 0;
+  background: lime; /* DEBUG temporal */
 }
 
 .dayList {
@@ -14,7 +16,7 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: var(--color-bg);
+  background: cyan; /* DEBUG temporal — normalmente var(--color-bg) */
 }
 
 /* Oculta la lista hasta que el auto-scroll a hoy ya se haya colocado, para que la
