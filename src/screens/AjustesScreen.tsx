@@ -7,7 +7,7 @@ import { CATEGORIA_FALLBACK_ID } from '../lib/categoriasSeed';
 import {
   deleteCategoria,
   getAllCategorias,
-  getAllIngredientes,
+  getAllPlatos,
   getAllReglasDiarias,
   getAllReglasGlobales,
   getPreferencias,
@@ -16,7 +16,7 @@ import {
   saveCategoria,
   setPreferencias,
   type Categoria,
-  type Ingrediente,
+  type Plato,
   type ReglaDiaria,
   type ReglaGlobal,
 } from '../lib/db';
@@ -31,7 +31,7 @@ export function AjustesScreen() {
   const navigate = useNavigate();
   const { setTopLeftBack } = useOutletContext<LayoutContext>();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [platos, setPlatos] = useState<Plato[]>([]);
   const [reglasDiarias, setReglasDiarias] = useState<ReglaDiaria[]>([]);
   const [reglasGlobales, setReglasGlobales] = useState<ReglaGlobal[]>([]);
   const [editing, setEditing] = useState<EditingCategoria | null>(null);
@@ -45,14 +45,14 @@ export function AjustesScreen() {
   }, [setTopLeftBack, navigate]);
 
   async function reloadCategoriasUso() {
-    const [c, i, rd, rg] = await Promise.all([
+    const [c, p, rd, rg] = await Promise.all([
       getAllCategorias(),
-      getAllIngredientes(),
+      getAllPlatos(),
       getAllReglasDiarias(),
       getAllReglasGlobales(),
     ]);
     setCategorias(c);
-    setIngredientes(i);
+    setPlatos(p);
     setReglasDiarias(rd);
     setReglasGlobales(rg);
   }
@@ -66,11 +66,11 @@ export function AjustesScreen() {
     if (!editing?.id) return 0;
     const id = editing.id;
     return (
-      ingredientes.filter((i) => i.categoriaId === id).length +
+      platos.filter((p) => p.categoriaId === id).length +
       reglasDiarias.filter((r) => r.tipo === 'categoria' && r.valorId === id).length +
       reglasGlobales.filter((r) => r.tipo === 'categoria' && r.valorId === id).length
     );
-  }, [editing, ingredientes, reglasDiarias, reglasGlobales]);
+  }, [editing, platos, reglasDiarias, reglasGlobales]);
 
   async function commitCategoria() {
     const nombre = editing?.nombre.trim();
@@ -115,7 +115,7 @@ export function AjustesScreen() {
 
   return (
     <div>
-      <p className={styles.sectionLabel}>Categorías de ingrediente</p>
+      <p className={styles.sectionLabel}>Categorías de plato</p>
       <div className={styles.group}>
         {categorias.map((categoria) => (
           <button

@@ -18,7 +18,7 @@ interface PlatoDetailProps {
   usageCount: number;
   onSave: (updated: Plato) => Promise<void>;
   onDelete: () => Promise<void>;
-  onCreateIngrediente: (nombre: string, categoriaId: string) => Promise<string>;
+  onCreateIngrediente: (nombre: string) => Promise<string>;
   onRenameIngrediente: (id: string, nombre: string) => Promise<void>;
 }
 
@@ -34,13 +34,16 @@ export function PlatoDetail({
 }: PlatoDetailProps) {
   const [nombre, setNombre] = useState(plato.nombre);
   const [tipo, setTipo] = useState<TipoPlato>(plato.tipo ?? 'ambas');
+  const [categoriaId, setCategoriaId] = useState(plato.categoriaId);
   const [notas, setNotas] = useState(plato.notas);
   const [items, setItems] = useState<PlatoIngrediente[]>(plato.ingredientes);
   const [addQuery, setAddQuery] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [pendingIngredienteNombre, setPendingIngredienteNombre] = useState<string | null>(null);
+  const [categoriaPickerOpen, setCategoriaPickerOpen] = useState(false);
+
+  const categoriaNombre = categorias.find((c) => c.id === categoriaId)?.nombre ?? '—';
 
   const availableFiltered = useMemo(() => {
     const addedIds = new Set(items.map((i) => i.ingredienteId));
@@ -60,17 +63,11 @@ export function PlatoDetail({
     setAddQuery('');
   }
 
-  function handleCreateIngrediente() {
+  async function handleCreateIngrediente() {
     const nombreNuevo = addQuery.trim();
     if (!nombreNuevo) return;
-    setPendingIngredienteNombre(nombreNuevo);
-  }
-
-  async function handleSelectCategoria(categoriaId: string) {
-    if (!pendingIngredienteNombre) return;
-    const id = await onCreateIngrediente(pendingIngredienteNombre, categoriaId);
+    const id = await onCreateIngrediente(nombreNuevo);
     addExisting(id);
-    setPendingIngredienteNombre(null);
   }
 
   function updateCantidad(ingredienteId: string, cantidad: string) {
@@ -121,6 +118,14 @@ export function PlatoDetail({
             {label}
           </button>
         ))}
+      </div>
+
+      <p className={styles.sectionLabel}>Categoría</p>
+      <div className={sharedStyles.group}>
+        <button type="button" className={sharedStyles.row} onClick={() => setCategoriaPickerOpen(true)}>
+          <span>{categoriaNombre}</span>
+          <span className={sharedStyles.rowSecondary}>›</span>
+        </button>
       </div>
 
       <p className={styles.sectionLabel}>Ingredientes</p>
@@ -221,7 +226,7 @@ export function PlatoDetail({
         type="button"
         className={sharedStyles.saveButton}
         onClick={() =>
-          onSave({ ...plato, nombre: nombre.trim() || plato.nombre, ingredientes: items, notas, tipo })
+          onSave({ ...plato, nombre: nombre.trim() || plato.nombre, ingredientes: items, notas, tipo, categoriaId })
         }
       >
         Guardar cambios
@@ -241,12 +246,16 @@ export function PlatoDetail({
         </button>
       </div>
 
-      {pendingIngredienteNombre !== null && (
+      {categoriaPickerOpen && (
         <CategoriaPickerSheet
           categorias={categorias}
-          title="Categoría del ingrediente"
-          onSelect={handleSelectCategoria}
-          onClose={() => setPendingIngredienteNombre(null)}
+          selectedId={categoriaId}
+          title="Categoría del plato"
+          onSelect={(id) => {
+            setCategoriaId(id);
+            setCategoriaPickerOpen(false);
+          }}
+          onClose={() => setCategoriaPickerOpen(false)}
         />
       )}
     </div>

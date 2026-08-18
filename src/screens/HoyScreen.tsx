@@ -10,8 +10,6 @@ import {
   comidaId,
   getAllComidas,
   getAllPlatos,
-  newId,
-  savePlato,
   setComida,
   clearComida,
   type Comida,
@@ -75,13 +73,6 @@ export function HoyScreen() {
     setComidas((prev) => [...prev.filter((x) => x.id !== c.id), c]);
   }
 
-  async function handleCreatePlato(nombre: string): Promise<string> {
-    const plato: Plato = { id: newId(), nombre, ingredientes: [], notas: '', tipo: 'ambas' };
-    await savePlato(plato);
-    setPlatos((prev) => [...prev, plato]);
-    return plato.id;
-  }
-
   async function handleAssignPlato(platoId: string) {
     if (!selectedTipo) return;
     const c: Comida = { id: comidaId(fecha, selectedTipo), fecha, tipo: selectedTipo, platoId, especial: null, tags: [] };
@@ -135,7 +126,6 @@ export function HoyScreen() {
           onClose={() => setSelectedTipo(null)}
           onAssignPlato={handleAssignPlato}
           onAssignEspecial={handleAssignEspecial}
-          onCreatePlato={handleCreatePlato}
           onClear={handleClear}
         />
       )}

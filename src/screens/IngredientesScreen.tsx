@@ -2,16 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
 import styles from './IngredientesScreen.module.css';
-import { CategoriaPickerSheet } from '../components/CategoriaPickerSheet';
 import { normalizeText } from '../lib/normalize';
 import {
   deleteIngrediente,
-  getAllCategorias,
   getAllIngredientes,
   getAllPlatos,
   newId,
   saveIngrediente,
-  type Categoria,
   type Ingrediente,
   type Plato,
 } from '../lib/db';
@@ -22,14 +19,11 @@ export function IngredientesScreen() {
   const { setTopLeftBack } = useOutletContext<LayoutContext>();
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [platos, setPlatos] = useState<Plato[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
-  const [pendingCreateNombre, setPendingCreateNombre] = useState<string | null>(null);
-  const [recategorizingId, setRecategorizingId] = useState<string | null>(null);
 
   useEffect(() => {
     setTopLeftBack({ label: 'Platos', onClick: () => navigate('/platos') });
@@ -37,10 +31,9 @@ export function IngredientesScreen() {
   }, [setTopLeftBack, navigate]);
 
   useEffect(() => {
-    Promise.all([getAllIngredientes(), getAllPlatos(), getAllCategorias()]).then(([i, p, c]) => {
+    Promise.all([getAllIngredientes(), getAllPlatos()]).then(([i, p]) => {
       setIngredientes(i);
       setPlatos(p);
-      setCategorias(c);
       setLoading(false);
     });
   }, []);
@@ -58,34 +51,13 @@ export function IngredientesScreen() {
     return platos.filter((p) => p.ingredientes.some((pi) => pi.ingredienteId === id)).length;
   }
 
-  function categoriaNombre(categoriaId: string): string {
-    return categorias.find((c) => c.id === categoriaId)?.nombre ?? '—';
-  }
-
-  function handleCreate() {
+  async function handleCreate() {
     const nombre = query.trim();
     if (!nombre) return;
-    setPendingCreateNombre(nombre);
-  }
-
-  async function handleSelectCategoriaCreate(categoriaId: string) {
-    if (!pendingCreateNombre) return;
-    const ingrediente: Ingrediente = { id: newId(), nombre: pendingCreateNombre, categoriaId };
+    const ingrediente: Ingrediente = { id: newId(), nombre };
     await saveIngrediente(ingrediente);
     setIngredientes((prev) => [...prev, ingrediente]);
     setQuery('');
-    setPendingCreateNombre(null);
-  }
-
-  async function handleSelectCategoriaRecategorize(categoriaId: string) {
-    if (!recategorizingId) return;
-    const ing = ingredientes.find((i) => i.id === recategorizingId);
-    if (ing) {
-      const actualizado: Ingrediente = { ...ing, categoriaId };
-      await saveIngrediente(actualizado);
-      setIngredientes((prev) => prev.map((i) => (i.id === recategorizingId ? actualizado : i)));
-    }
-    setRecategorizingId(null);
   }
 
   function startRename(ing: Ingrediente) {
@@ -160,13 +132,6 @@ export function IngredientesScreen() {
                   {ing.nombre}
                 </button>
               )}
-              <button
-                type="button"
-                className={styles.categoriaLabel}
-                onClick={() => setRecategorizingId(ing.id)}
-              >
-                {categoriaNombre(ing.categoriaId)}
-              </button>
               <button type="button" className={styles.deleteButton} onClick={() => handleDelete(ing.id)}>
                 {confirmingDeleteId === ing.id
                   ? count > 0
@@ -178,25 +143,6 @@ export function IngredientesScreen() {
           );
         })}
       </div>
-
-      {pendingCreateNombre !== null && (
-        <CategoriaPickerSheet
-          categorias={categorias}
-          title="Categoría del ingrediente"
-          onSelect={handleSelectCategoriaCreate}
-          onClose={() => setPendingCreateNombre(null)}
-        />
-      )}
-
-      {recategorizingId !== null && (
-        <CategoriaPickerSheet
-          categorias={categorias}
-          selectedId={ingredientes.find((i) => i.id === recategorizingId)?.categoriaId}
-          title="Cambiar categoría"
-          onSelect={handleSelectCategoriaRecategorize}
-          onClose={() => setRecategorizingId(null)}
-        />
-      )}
     </div>
   );
 }

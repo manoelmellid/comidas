@@ -13,7 +13,6 @@ interface AsignarComidaSheetProps {
   onClose: () => void;
   onAssignPlato: (platoId: string) => void;
   onAssignEspecial: (especial: Especial, tags: string[]) => void;
-  onCreatePlato: (nombre: string) => Promise<string>;
   onClear: () => void;
 }
 
@@ -27,7 +26,6 @@ export function AsignarComidaSheet({
   onClose,
   onAssignPlato,
   onAssignEspecial,
-  onCreatePlato,
   onClear,
 }: AsignarComidaSheetProps) {
   const dateLabel = formatFullDayLabel(parseISODate(fecha));
@@ -42,15 +40,6 @@ export function AsignarComidaSheet({
     if (!q) return platos;
     return platos.filter((p) => normalizeText(p.nombre).includes(q));
   }, [platos, query]);
-
-  const exactMatch = platos.some((p) => normalizeText(p.nombre) === normalizeText(query.trim()));
-
-  async function handleCreateAndAssign() {
-    const nombre = query.trim();
-    if (!nombre) return;
-    const id = await onCreatePlato(nombre);
-    onAssignPlato(id);
-  }
 
   function addTag() {
     const t = tagInput.trim();
@@ -111,7 +100,7 @@ export function AsignarComidaSheet({
     <Sheet title={`Asignar ${tipoLabel} - ${dateLabel}`} onClose={onClose}>
       <input
         className={styles.search}
-        placeholder="Buscar o crear plato…"
+        placeholder="Buscar plato…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
@@ -132,13 +121,10 @@ export function AsignarComidaSheet({
       </div>
 
       <div className={styles.group}>
-        {query.trim() && !exactMatch && (
-          <button type="button" className={`${styles.row} ${styles.rowAccent}`} onClick={handleCreateAndAssign}>
-            + Crear "{query.trim()}"
-          </button>
-        )}
-        {filtered.length === 0 && !query.trim() && (
-          <p className={styles.emptyHint}>Aún no tienes platos. Escribe uno arriba para crearlo.</p>
+        {filtered.length === 0 && (
+          <p className={styles.emptyHint}>
+            {query.trim() ? 'Ningún plato coincide con la búsqueda.' : 'Aún no tienes platos. Créalos desde la pestaña Platos.'}
+          </p>
         )}
         {filtered.map((p) => (
           <button key={p.id} type="button" className={styles.row} onClick={() => onAssignPlato(p.id)}>

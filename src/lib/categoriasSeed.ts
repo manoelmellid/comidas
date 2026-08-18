@@ -1,6 +1,6 @@
 import type { Categoria } from './db';
 
-/** Lista de partida de categorías de ingrediente, con ids slug estables. Editable desde Ajustes. */
+/** Lista de partida de categorías de plato, con ids slug estables. Editable desde Ajustes. */
 export const CATEGORIAS_SEED: Categoria[] = [
   { id: 'carne', nombre: 'Carne' },
   { id: 'pescado', nombre: 'Pescado' },
@@ -14,5 +14,5 @@ export const CATEGORIAS_SEED: Categoria[] = [
   { id: 'otros', nombre: 'Otros' },
 ];
 
-/** Id de fallback para ingredientes creados antes de que la categoría fuera obligatoria. */
+/** Id de fallback para platos creados antes de que la categoría fuera obligatoria. */
 export const CATEGORIA_FALLBACK_ID = 'otros';

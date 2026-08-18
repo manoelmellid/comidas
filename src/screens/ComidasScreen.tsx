@@ -9,8 +9,6 @@ import {
   comidaId,
   getAllComidas,
   getAllPlatos,
-  newId,
-  savePlato,
   setComida,
   clearComida,
   type Comida,
@@ -95,13 +93,6 @@ export function ComidasScreen() {
 
   function upsertLocalComida(c: Comida) {
     setComidas((prev) => [...prev.filter((x) => x.id !== c.id), c]);
-  }
-
-  async function handleCreatePlato(nombre: string): Promise<string> {
-    const plato: Plato = { id: newId(), nombre, ingredientes: [], notas: '', tipo: 'ambas' };
-    await savePlato(plato);
-    setPlatos((prev) => [...prev, plato]);
-    return plato.id;
   }
 
   async function handleAssignPlato(platoId: string) {
@@ -190,7 +181,6 @@ export function ComidasScreen() {
           onClose={() => setSelection(null)}
           onAssignPlato={handleAssignPlato}
           onAssignEspecial={handleAssignEspecial}
-          onCreatePlato={handleCreatePlato}
           onClear={handleClear}
         />
       )}

@@ -8,7 +8,6 @@ export type Especial = 'fuera';
 export interface Ingrediente {
   id: string;
   nombre: string;
-  categoriaId: string;
 }
 
 export interface PlatoIngrediente {
@@ -24,6 +23,7 @@ export interface Plato {
   ingredientes: PlatoIngrediente[];
   notas: string;
   tipo: TipoPlato;
+  categoriaId: string;
 }
 
 /** One row per (fecha, tipo) slot. `id` is the deterministic key `${fecha}__${tipo}`. */
@@ -109,7 +109,7 @@ interface ComidasDB extends DBSchema {
 }
 
 const DB_NAME = 'comidas-db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const PREFERENCIAS_ID = 'main';
 
 let dbPromise: Promise<IDBPDatabase<ComidasDB>> | null = null;
@@ -148,14 +148,15 @@ export function getDB(): Promise<IDBPDatabase<ComidasDB>> {
           await Promise.all(CATEGORIAS_SEED.map((categoria) => categoriasStore.put(categoria)));
         }
 
-        // Ingredientes creados antes de que la categoría fuera obligatoria: rellenar con el fallback.
-        const ingredientesStore = transaction.objectStore('ingredientes');
-        let cursor = await ingredientesStore.openCursor();
-        while (cursor) {
-          if (!cursor.value.categoriaId) {
-            await cursor.update({ ...cursor.value, categoriaId: CATEGORIA_FALLBACK_ID });
+        // Platos creados antes de que la categoría fuera obligatoria (o de que pasara a vivir
+        // en el plato en vez de en el ingrediente): rellenar con el fallback.
+        const platosStore = transaction.objectStore('platos');
+        let platoCursor = await platosStore.openCursor();
+        while (platoCursor) {
+          if (!platoCursor.value.categoriaId) {
+            await platoCursor.update({ ...platoCursor.value, categoriaId: CATEGORIA_FALLBACK_ID });
           }
-          cursor = await cursor.continue();
+          platoCursor = await platoCursor.continue();
         }
       },
     });
@@ -257,18 +258,18 @@ export async function deleteCategoria(id: string): Promise<void> {
   await db.delete('categorias', id);
 }
 
-/** Reasigna ingredientes y reglas que apuntaban a `fromId` hacia `toId`, y borra `fromId`. */
+/** Reasigna platos y reglas que apuntaban a `fromId` hacia `toId`, y borra `fromId`. */
 export async function mergeCategoria(fromId: string, toId: string): Promise<void> {
   const db = await getDB();
-  const tx = db.transaction(['categorias', 'ingredientes', 'reglasDiarias', 'reglasGlobales'], 'readwrite');
+  const tx = db.transaction(['categorias', 'platos', 'reglasDiarias', 'reglasGlobales'], 'readwrite');
 
-  const ingredientesStore = tx.objectStore('ingredientes');
-  let ingredienteCursor = await ingredientesStore.openCursor();
-  while (ingredienteCursor) {
-    if (ingredienteCursor.value.categoriaId === fromId) {
-      await ingredienteCursor.update({ ...ingredienteCursor.value, categoriaId: toId });
+  const platosStore = tx.objectStore('platos');
+  let platoCursor = await platosStore.openCursor();
+  while (platoCursor) {
+    if (platoCursor.value.categoriaId === fromId) {
+      await platoCursor.update({ ...platoCursor.value, categoriaId: toId });
     }
-    ingredienteCursor = await ingredienteCursor.continue();
+    platoCursor = await platoCursor.continue();
   }
 
   const reglasDiariasStore = tx.objectStore('reglasDiarias');

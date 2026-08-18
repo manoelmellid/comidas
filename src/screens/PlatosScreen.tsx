@@ -5,6 +5,7 @@ import sharedStyles from '../features/comidas/AsignarComidaSheet.module.css';
 import styles from './PlatosScreen.module.css';
 import { IconIngredientes } from '../components/icons';
 import { normalizeText } from '../lib/normalize';
+import { CATEGORIA_FALLBACK_ID } from '../lib/categoriasSeed';
 import type { LayoutContext } from '../lib/layoutContext';
 import {
   deletePlato,
@@ -86,7 +87,14 @@ export function PlatosScreen() {
   async function handleCreate() {
     const nombre = query.trim();
     if (!nombre) return;
-    const plato: Plato = { id: newId(), nombre, ingredientes: [], notas: '', tipo: 'ambas' };
+    const plato: Plato = {
+      id: newId(),
+      nombre,
+      ingredientes: [],
+      notas: '',
+      tipo: 'ambas',
+      categoriaId: CATEGORIA_FALLBACK_ID,
+    };
     await savePlato(plato);
     setPlatos((prev) => [...prev, plato]);
     setQuery('');
@@ -105,8 +113,8 @@ export function PlatosScreen() {
     setSelectedId(null);
   }
 
-  async function handleCreateIngrediente(nombre: string, categoriaId: string): Promise<string> {
-    const ingrediente: Ingrediente = { id: newId(), nombre, categoriaId };
+  async function handleCreateIngrediente(nombre: string): Promise<string> {
+    const ingrediente: Ingrediente = { id: newId(), nombre };
     await saveIngrediente(ingrediente);
     setIngredientes((prev) => [...prev, ingrediente]);
     return ingrediente.id;

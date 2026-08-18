@@ -12,7 +12,6 @@ import {
   reglaDiariaId,
   setComida,
   type DiaSemana,
-  type Ingrediente,
   type Plato,
   type ReglaGlobal,
   type TipoComida,
@@ -41,24 +40,10 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function categoriasDePlato(plato: Plato, ingredienteById: Map<string, Ingrediente>): Set<string> {
-  const cats = new Set<string>();
-  for (const pi of plato.ingredientes) {
-    const ing = ingredienteById.get(pi.ingredienteId);
-    if (ing) cats.add(ing.categoriaId);
-  }
-  return cats;
-}
-
-function platoMatchesValor(
-  plato: Plato,
-  tipo: 'plato' | 'ingrediente' | 'categoria',
-  valorId: string,
-  ingredienteById: Map<string, Ingrediente>,
-): boolean {
+function platoMatchesValor(plato: Plato, tipo: 'plato' | 'ingrediente' | 'categoria', valorId: string): boolean {
   if (tipo === 'plato') return plato.id === valorId;
   if (tipo === 'ingrediente') return plato.ingredientes.some((pi) => pi.ingredienteId === valorId);
-  return categoriasDePlato(plato, ingredienteById).has(valorId);
+  return plato.categoriaId === valorId;
 }
 
 /**
@@ -82,7 +67,6 @@ export async function generarSemana(): Promise<GeneracionResultado> {
     ]);
 
   const platoById = new Map(platos.map((p) => [p.id, p]));
-  const ingredienteById = new Map(ingredientes.map((i) => [i.id, i]));
   const reglaDiariaById = new Map(reglasDiarias.map((r) => [r.id, r]));
   const comidaByKey = new Map(comidasSemana.map((c) => [c.id, c]));
 
@@ -149,13 +133,13 @@ export async function generarSemana(): Promise<GeneracionResultado> {
     if (regla.modo === 'prohibir') {
       for (const platoId of pool) {
         const plato = platoById.get(platoId);
-        if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId, ingredienteById)) pool.delete(platoId);
+        if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId)) pool.delete(platoId);
       }
     } else if (regla.modo === 'forzar') {
       // aquí solo llegan ingrediente/categoria — plato+forzar ya se resolvió arriba
       for (const platoId of [...pool]) {
         const plato = platoById.get(platoId);
-        if (!plato || !platoMatchesValor(plato, regla.tipo, regla.valorId, ingredienteById)) pool.delete(platoId);
+        if (!plato || !platoMatchesValor(plato, regla.tipo, regla.valorId)) pool.delete(platoId);
       }
     }
   }
@@ -173,7 +157,7 @@ export async function generarSemana(): Promise<GeneracionResultado> {
       if (regla.aplica !== 'ambas' && regla.aplica !== slot.tipo) continue;
       const platoId = platoIdEnSlot(slot);
       const plato = platoId ? platoById.get(platoId) : undefined;
-      if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId, ingredienteById)) count++;
+      if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId)) count++;
     }
     return count;
   }
@@ -186,7 +170,7 @@ export async function generarSemana(): Promise<GeneracionResultado> {
       if (!pool) continue;
       for (const platoId of [...pool]) {
         const plato = platoById.get(platoId);
-        if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId, ingredienteById)) pool.delete(platoId);
+        if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId)) pool.delete(platoId);
       }
     }
   }
@@ -213,7 +197,7 @@ export async function generarSemana(): Promise<GeneracionResultado> {
         if (!pool) return false;
         for (const platoId of pool) {
           const plato = platoById.get(platoId);
-          if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId, ingredienteById)) return true;
+          if (plato && platoMatchesValor(plato, regla.tipo, regla.valorId)) return true;
         }
         return false;
       });
@@ -223,7 +207,7 @@ export async function generarSemana(): Promise<GeneracionResultado> {
       const pool = candidatos.get(slot.key)!;
       const opciones = [...pool].filter((platoId) => {
         const plato = platoById.get(platoId);
-        return !!plato && platoMatchesValor(plato, regla.tipo, regla.valorId, ingredienteById);
+        return !!plato && platoMatchesValor(plato, regla.tipo, regla.valorId);
       });
       const elegido = pickRandom(opciones);
       resultado.set(slot.key, { platoId: elegido });
